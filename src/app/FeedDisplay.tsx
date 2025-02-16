@@ -1,17 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import NDK from "@nostr-dev-kit/ndk";
-import { type FeedRule } from "@/lib/rules";
+import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import Note from "@/components/Note";
 import { useFeed } from "@/hooks/useFeed";
+import { Feed } from "@/app/types";
 
 interface FeedDisplayProps {
-  ndk: NDK;
-  rules: FeedRule[];
+  feed: Feed;
 }
 
-const FeedDisplay = ({ ndk, rules }: FeedDisplayProps) => {
-  const { notes, loading, loadMore } = useFeed(ndk, rules);
+const FeedDisplay = ({ feed }: FeedDisplayProps) => {
+  const { notes, loading, loadMore } = useFeed(feed.rules);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

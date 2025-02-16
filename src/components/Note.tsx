@@ -33,6 +33,17 @@ const Note: React.FC<NoteProps> = ({ note }) => {
   return (
     <Card className="w-full">
       <CardContent className="p-4">
+        {note.likedBy.length > 0 && (
+          <div className="mt-1 mb-3 flex flex-wrap gap-2">
+            <span className="text-sm text-gray-500">Liked by:</span>
+            {note.likedBy.map((liker, i) => (
+              <span key={liker.pubkey} className="text-sm text-gray-600">
+                {liker.profile?.name || liker.pubkey.slice(0, 8)}
+                {i < note.likedBy.length - 1 && ", "}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="flex items-start space-x-4">
           <Avatar className="w-10 h-10 flex-shrink-0">
             {note.author?.picture && (
@@ -66,17 +77,6 @@ const Note: React.FC<NoteProps> = ({ note }) => {
             </div>
 
             <NoteContent content={note.event.content} />
-
-            {note.likedBy.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="text-sm text-gray-500">Liked by:</span>
-                {note.likedBy.map((liker) => (
-                  <span key={liker.pubkey} className="text-sm text-gray-600">
-                    {liker.profile?.name || liker.pubkey.slice(0, 8)}
-                  </span>
-                ))}
-              </div>
-            )}
 
             <div className="flex items-center space-x-6 mt-4 text-gray-500">
               <div className="flex items-center space-x-2">

@@ -4,27 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PlusCircle, Save, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// Types for our feed rules
-export interface FeedRule {
-  id: string;
-  subject: "Posts" | "Pictures";
-  verb: "posted" | "trending" | "commented" | "liked" | "interacted";
-  predicate: "followers" | "nostr" | "tribe";
-  timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
-  weight: number;
-}
-
+import { FeedRule } from "./types";
+import { useSaveAlgorithm } from "hooks/useSaveAlgorithm";
 export interface AlgorithmBuilderProps {
-  onSave: (rules: FeedRule[]) => void;
   initialRules?: FeedRule[];
+  initialName?: string;
 }
 
 const AlgorithmBuilder = ({
-  onSave,
   initialRules = [],
+  initialName = "",
 }: AlgorithmBuilderProps) => {
+  const saveAlgorithm = useSaveAlgorithm();
   const [rules, setRules] = useState<FeedRule[]>(initialRules);
+  const [name, setName] = useState(initialName);
   const [error, setError] = useState<string>("");
 
   const subjects = ["Posts", "Pictures"] as const;
@@ -83,6 +76,11 @@ const AlgorithmBuilder = ({
   };
 
   const validateRules = (): boolean => {
+    if (!name.trim()) {
+      setError("Feed name is required");
+      return false;
+    }
+
     if (rules.length === 0) {
       setError("At least one rule is required");
       return false;
@@ -98,9 +96,10 @@ const AlgorithmBuilder = ({
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    console.log("saving algorithm", { name, rules });
     if (validateRules()) {
-      onSave(rules);
+      await saveAlgorithm(rules, name);
     }
   };
 
@@ -126,6 +125,17 @@ const AlgorithmBuilder = ({
             </AlertDescription>
           </Alert>
         )}
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-1">Feed Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter feed name"
+            className="w-full p-2 border rounded"
+          />
+        </div>
 
         <div className="space-y-4">
           {rules.map((rule, index) => (

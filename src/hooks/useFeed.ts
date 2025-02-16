@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import NDK, { NDKEvent, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { createFilters, getTimeFromRange, type FeedRule } from "@/lib/rules";
+import { useNDK } from "./useNDK";
 
 export interface Note {
   id: string;
@@ -24,7 +25,8 @@ export interface Note {
   }>;
 }
 
-export function useFeed(ndk: NDK, rules: FeedRule[]) {
+export function useFeed(rules: FeedRule[]) {
+  const { ndk } = useNDK();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [followedPubkeys, setFollowedPubkeys] = useState<string[]>([]);
@@ -32,14 +34,14 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
   const profiles = useRef<Map<string, any>>(new Map());
   const likedEventIds = useRef<Set<string>>(new Set());
   const likesByEventId = useRef<Map<string, Set<string>>>(new Map());
-  const [hasMore, setHasMore] = useState(true);
   const currentUntil = useRef<number>(Math.floor(Date.now() / 1000));
   const BATCH_SIZE = 20;
+  const isLoadingMore = useRef(false);
 
   // Fetch followers on mount
   useEffect(() => {
     const fetchFollowing = async () => {
-      if (!ndk.activeUser?.pubkey) return;
+      if (!ndk || !ndk.activeUser?.pubkey) return;
 
       const followListEvent = await ndk.fetchEvent({
         kinds: [3],
@@ -63,7 +65,7 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
       if (profiles.current.has(pubkey)) return profiles.current.get(pubkey);
 
       try {
-        const event = await ndk.fetchEvent({
+        const event = await ndk?.fetchEvent({
           kinds: [0],
           authors: [pubkey],
         });
@@ -148,6 +150,7 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
           const note: Note = {
             id: event.id,
             event,
+            author: profiles.current.get(event.pubkey),
             stats: {
               replies: 0,
               reactions: 0,
@@ -166,18 +169,29 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
           }
 
           setNotes((prev) => {
-            // Create entries array with proper typing
-            const entries: [string, Note][] = prev.map(n => [n.id, n]);
+            const entries: [string, Note][] = prev.map((n) => [n.id, n]);
             entries.push([note.id, note]);
-            
-            // Create Map from entries and convert back to array
+
             const uniqueNotes = new Map(entries);
-            return Array.from(uniqueNotes.values()).sort(
+            const sortedNotes = Array.from(uniqueNotes.values()).sort(
               (a, b) => (b.event.created_at || 0) - (a.event.created_at || 0)
             );
+
+            // Update currentUntil after we've processed a batch of events
+            if (isLoadingMore.current) {
+              const oldestTimestamp = Math.min(
+                ...sortedNotes.map((note) => note.event.created_at || 0)
+              );
+              currentUntil.current = oldestTimestamp - 1;
+            }
+
+            return sortedNotes;
           });
 
-          fetchProfile(event.pubkey);
+          // Only fetch profile if we don't already have it
+          if (!profiles.current.has(event.pubkey)) {
+            fetchProfile(event.pubkey);
+          }
           break;
         }
 
@@ -212,13 +226,13 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
   );
 
   const loadMore = useCallback(() => {
-    if (!ndk || !followedPubkeys.length || !hasMore) return;
+    if (!ndk || !followedPubkeys.length || isLoadingMore.current) return;
 
-    console.log("Loading more...");
+    console.log("Loading more...", currentUntil.current);
+    isLoadingMore.current = true;
 
-    // Clear existing subscriptions before creating new ones
-    subscriptions.current.forEach((sub) => sub.stop());
-    subscriptions.current = [];
+    // Don't clear existing subscriptions, just create new ones for the next batch
+    const newSubs: NDKSubscription[] = [];
 
     rules.forEach((rule) => {
       if (rule.verb === "liked") {
@@ -253,43 +267,32 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
 
         filters.forEach((filter) => {
           const sub = ndk.subscribe(filter);
-          
-          let eventCount = 0;
-          sub.on("event", (event) => {
-            eventCount++;
-            handleEvent(event);
-          });
+          sub.on("event", handleEvent);
 
+          // Add EOSE handler to know when batch is complete
           sub.on("eose", () => {
-            if (eventCount < BATCH_SIZE) {
-              setHasMore(false);
-            }
+            isLoadingMore.current = false;
           });
 
-          subscriptions.current.push(sub);
+          newSubs.push(sub);
         });
       }
     });
 
-    // Update the until timestamp for the next batch
-    if (notes.length > 0) {
-      currentUntil.current = Math.min(
-        ...notes.map((note) => note.event.created_at || 0)
-      );
-    }
-  }, [ndk, rules, followedPubkeys, hasMore, notes, handleEvent]);
+    subscriptions.current = [...subscriptions.current, ...newSubs];
+  }, [ndk, rules, followedPubkeys, handleEvent]);
 
   // Initial load
   useEffect(() => {
     if (!ndk || !followedPubkeys.length) return;
 
+    // Clear everything only on initial load or when rules/follows change
     subscriptions.current.forEach((sub) => sub.stop());
     subscriptions.current = [];
     setNotes([]);
     likedEventIds.current.clear();
     likesByEventId.current.clear();
     setLoading(true);
-    setHasMore(true);
     currentUntil.current = Math.floor(Date.now() / 1000);
 
     loadMore();
@@ -300,5 +303,10 @@ export function useFeed(ndk: NDK, rules: FeedRule[]) {
     };
   }, [ndk, rules, followedPubkeys]);
 
-  return { notes, loading, hasMore, loadMore };
-} 
+  useEffect(() => {
+    console.log(rules);
+    currentUntil.current = Math.floor(Date.now() / 1000);
+  }, [rules]);
+
+  return { notes, loading, loadMore };
+}
