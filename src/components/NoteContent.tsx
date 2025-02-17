@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { NDKUser, NDKEvent } from "@nostr-dev-kit/ndk";
 import { useNDK } from "../hooks/useNDK";
 import { useNavigate } from "react-router-dom";
+import NoteHeader from "./NoteHeader";
+import { Author } from "app/types";
 interface NoteContentProps {
   content: string;
   isQuotedNote?: boolean;
@@ -40,7 +42,7 @@ const isNoteReference = (word: string): boolean => {
 };
 
 const getNpubFromReference = (reference: string): string => {
-  return reference.replace("nostr:", "");
+  return reference.replace("nostr:", "").replace(".", "");
 };
 
 const getNoteIdFromReference = (reference: string): string => {
@@ -68,7 +70,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
     new Map()
   );
   const [quotedNoteAuthors, setQuotedNoteAuthors] = useState<
-    Map<string, NDKUser>
+    Map<string, Author>
   >(new Map());
 
   useEffect(() => {
@@ -103,7 +105,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
         if (noteIds.length === 0) return;
 
         const notes = new Map<string, NDKEvent>();
-        const authors = new Map<string, NDKUser>();
+        const authors = new Map<string, Author>();
 
         for (const noteId of noteIds) {
           try {
@@ -114,7 +116,11 @@ export const NoteContent: React.FC<NoteContentProps> = ({
               const author = await ndk?.getUser({ pubkey: event.pubkey });
               if (author) {
                 await author.fetchProfile();
-                authors.set(noteId, author);
+                authors.set(noteId, {
+                  name: author.profile?.name,
+                  picture: author.profile?.image,
+                  nip05: author.profile?.nip05,
+                });
               }
             }
           } catch (error) {
@@ -180,19 +186,11 @@ export const NoteContent: React.FC<NoteContentProps> = ({
                     key={wordIndex}
                     className="mt-2 mb-2 p-4 border rounded-lg bg-gray-50"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      {author?.profile?.image && (
-                        <img
-                          src={author.profile.image}
-                          alt={author.profile?.name || "Profile"}
-                          className="w-5 h-5 rounded-full"
-                        />
-                      )}
-                      <span className="font-medium">
-                        {author?.profile?.name ||
-                          author?.npub?.slice(0, 8) + "..."}
-                      </span>
-                    </div>
+                    <NoteHeader
+                      author={author}
+                      pubkey={quotedNote.pubkey}
+                      createdAt={quotedNote.created_at!}
+                    />
                     <NoteContent
                       content={quotedNote.content}
                       isQuotedNote={true}

@@ -2,28 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import NDK, { NDKEvent, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { createFilters, getTimeFromRange, type FeedRule } from "@/lib/rules";
 import { useNDK } from "./useNDK";
-
-export interface Note {
-  id: string;
-  event: NDKEvent;
-  author?: {
-    name?: string;
-    picture?: string;
-    nip05?: string;
-  };
-  stats: {
-    replies: number;
-    reactions: number;
-    reposts: number;
-  };
-  likedBy: Array<{
-    pubkey: string;
-    profile?: {
-      name?: string;
-      picture?: string;
-    };
-  }>;
-}
+import { processLikeEvent } from "@/lib/nostr";
+import { Note } from "@/app/types";
 
 export function useFeed(rules: FeedRule[]) {
   const { ndk } = useNDK();
@@ -85,7 +65,7 @@ export function useFeed(rules: FeedRule[]) {
           setNotes((prevNotes) =>
             prevNotes.map((note) => ({
               ...note,
-              likedBy: note.likedBy.map((liker) =>
+              likedBy: note.likedBy?.map((liker) =>
                 liker.pubkey === pubkey ? { ...liker, profile } : liker
               ),
             }))
@@ -103,16 +83,15 @@ export function useFeed(rules: FeedRule[]) {
   // Handle like events
   const handleLikeEvent = useCallback(
     async (event: NDKEvent) => {
-      const eventTag = event.tags.find((t) => t[0] === "e");
-      if (!eventTag || event.content !== "+") return;
+      const result = processLikeEvent(
+        event,
+        profiles.current,
+        likedEventIds.current,
+        likesByEventId.current
+      );
+      if (!result) return;
 
-      const likedEventId = eventTag[1];
-      likedEventIds.current.add(likedEventId);
-
-      if (!likesByEventId.current.has(likedEventId)) {
-        likesByEventId.current.set(likedEventId, new Set());
-      }
-      likesByEventId.current.get(likedEventId)?.add(event.pubkey);
+      const { likedEventId } = result;
 
       setNotes((prevNotes) => {
         const noteIndex = prevNotes.findIndex((n) => n.id === likedEventId);
@@ -121,8 +100,8 @@ export function useFeed(rules: FeedRule[]) {
         const updatedNotes = [...prevNotes];
         const note = { ...updatedNotes[noteIndex] };
 
-        if (!note.likedBy.some((liker) => liker.pubkey === event.pubkey)) {
-          note.likedBy.push({
+        if (!note.likedBy?.some((liker) => liker.pubkey === event.pubkey)) {
+          note.likedBy?.push({
             pubkey: event.pubkey,
             profile: profiles.current.get(event.pubkey),
           });
@@ -137,7 +116,7 @@ export function useFeed(rules: FeedRule[]) {
         fetchProfile(event.pubkey);
       }
     },
-    [fetchProfile]
+    [ndk]
   );
 
   // Process incoming events
@@ -146,10 +125,10 @@ export function useFeed(rules: FeedRule[]) {
       switch (event.kind) {
         case 1: {
           if (notes.some((n) => n.id === event.id)) return;
-
           const note: Note = {
             id: event.id,
             event,
+            pubkey: event.pubkey,
             author: profiles.current.get(event.pubkey),
             stats: {
               replies: 0,
@@ -228,7 +207,6 @@ export function useFeed(rules: FeedRule[]) {
   const loadMore = useCallback(() => {
     if (!ndk || !followedPubkeys.length || isLoadingMore.current) return;
 
-    console.log("Loading more...", currentUntil.current);
     isLoadingMore.current = true;
 
     // Don't clear existing subscriptions, just create new ones for the next batch
@@ -304,7 +282,6 @@ export function useFeed(rules: FeedRule[]) {
   }, [ndk, rules, followedPubkeys]);
 
   useEffect(() => {
-    console.log(rules);
     currentUntil.current = Math.floor(Date.now() / 1000);
   }, [rules]);
 

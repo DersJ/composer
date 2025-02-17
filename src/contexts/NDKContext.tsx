@@ -12,6 +12,7 @@ import NDK, {
   NDKUser,
 } from "@nostr-dev-kit/ndk";
 import { RELAYS } from "@/lib/utils";
+import NDKCacheAdapterDexie from "@nostr-dev-kit/ndk-cache-dexie";
 
 interface NDKContextType {
   ndk: NDK | null;
@@ -26,6 +27,7 @@ interface NDKProviderProps {
 
 export function NDKProvider({ children }: NDKProviderProps) {
   const [ndk, setNDK] = useState<NDK | null>(null);
+  const dexieAdapter = new NDKCacheAdapterDexie({ dbName: "feedstr-cache" });
 
   // Shared function to check for NIP-65 relays and initialize NDK
   const initializeWithRelays = useCallback(
@@ -57,6 +59,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
             const userNdkInstance = new NDK({
               signer: ndkInstance.signer,
               explicitRelayUrls: userRelays,
+              cacheAdapter: dexieAdapter,
             });
 
             if (!userNdkInstance.activeUser) {
@@ -89,6 +92,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
       const ndkInstance = new NDK({
         signer,
         explicitRelayUrls: RELAYS,
+        cacheAdapter: dexieAdapter,
       });
 
       try {
@@ -120,6 +124,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
           ndkInstance = new NDK({
             signer,
             explicitRelayUrls: RELAYS,
+            cacheAdapter: dexieAdapter,
           });
           user = await signer.user();
         } else if (publicKey) {
@@ -127,6 +132,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
           console.log("publicKey", publicKey);
           ndkInstance = new NDK({
             explicitRelayUrls: RELAYS,
+            cacheAdapter: dexieAdapter,
           });
           user = new NDKUser({ pubkey: publicKey });
           ndkInstance.activeUser = user;

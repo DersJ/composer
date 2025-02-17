@@ -53,7 +53,6 @@ export function FeedsProvider({ children }: { children: ReactNode }) {
       }
 
       setFeeds(loadedFeeds);
-      console.log(loadedFeeds);
       if (loadedFeeds.length > 0) {
         setActiveFeed(loadedFeeds[0]);
       }

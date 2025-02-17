@@ -1,98 +1,110 @@
 import React from "react";
-import { NDKEvent } from "@nostr-dev-kit/ndk";
+import { NDKEvent, NostrEvent } from "@nostr-dev-kit/ndk";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Heart, Repeat2 } from "lucide-react";
 import { NoteContent } from "./NoteContent";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useNDK } from "hooks/useNDK";
+import { Note as NoteType } from "app/types";
+import NoteHeader from "./NoteHeader";
 
 interface NoteProps {
-  note: {
-    id: string;
-    event: NDKEvent;
-    author?: {
-      name?: string;
-      picture?: string;
-      nip05?: string;
-    };
-    stats: {
-      replies: number;
-      reactions: number;
-      reposts: number;
-    };
-    likedBy: Array<{
-      pubkey: string;
-      profile?: {
-        name?: string;
-        picture?: string;
-      };
-    }>;
-  };
+  note: NoteType;
+  onClick?: () => void;
+  className?: string;
+  showLikedBy?: boolean;
 }
 
-const Note: React.FC<NoteProps> = ({ note }) => {
+const Note: React.FC<NoteProps> = ({
+  note,
+  onClick,
+  className,
+  showLikedBy,
+}) => {
+  const { ndk } = useNDK();
+  const [isLiked, setIsLiked] = React.useState(false);
+  const [likeCount, setLikeCount] = React.useState(note.stats.reactions);
+
+  const handleLike = async () => {
+    if (!ndk || !ndk.activeUser?.pubkey || isLiked) return;
+
+    try {
+      const reaction: NostrEvent = {
+        kind: 7,
+        tags: [
+          ["e", note.id],
+          ["p", note.event.pubkey],
+        ],
+        content: "+",
+        created_at: Math.floor(Date.now() / 1000),
+        pubkey: ndk.activeUser?.pubkey,
+      };
+      const reactionEvent = new NDKEvent(ndk, reaction);
+
+      const event = await reactionEvent.publish();
+      if (event) {
+        setIsLiked(true);
+        setLikeCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Failed to like note:", error);
+    }
+  };
+
   return (
-    <Card className="w-full">
+    <Card onClick={onClick} className={cn("w-full", className)}>
       <CardContent className="p-4">
-        {note.likedBy.length > 0 && (
+        {showLikedBy && !!note.likedBy?.length && (
           <div className="mt-1 mb-3 flex flex-wrap gap-2">
             <span className="text-sm text-gray-500">Liked by:</span>
-            {note.likedBy.map((liker, i) => (
+            {note.likedBy?.map((liker, i) => (
               <span key={liker.pubkey} className="text-sm text-gray-600">
                 {liker.profile?.name || liker.pubkey.slice(0, 8)}
-                {i < note.likedBy.length - 1 && ", "}
+                {i < (note.likedBy?.length || 0) - 1 && ", "}
               </span>
             ))}
           </div>
         )}
-        <div className="flex items-start space-x-4">
-          <Avatar className="w-10 h-10 flex-shrink-0">
-            {note.author?.picture && (
-              <AvatarImage
-                src={note.author.picture}
-                alt={note.author.name || "Author"}
-              />
-            )}
-            <AvatarFallback>
-              {(
-                note.author?.name?.[0] || note.event.pubkey.slice(0, 2)
-              ).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+        <NoteHeader
+          author={note.author}
+          pubkey={note.event.pubkey}
+          createdAt={note.event.created_at!}
+        />
 
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start">
-              <div className="min-w-0 break-words">
-                <h3 className="font-semibold truncate">
-                  {note.author?.name || note.event.pubkey.slice(0, 8)}
-                </h3>
-                {note.author?.nip05 && (
-                  <p className="text-sm text-gray-500 truncate">
-                    {note.author.nip05}
-                  </p>
-                )}
-              </div>
-              <span className="text-sm text-gray-500 flex-shrink-0">
-                {new Date(note.event.created_at! * 1000).toLocaleString()}
-              </span>
-            </div>
+        <NoteContent content={note.event.content} />
 
-            <NoteContent content={note.event.content} />
-
-            <div className="flex items-center space-x-6 mt-4 text-gray-500">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>{note.stats.replies}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Heart className="w-4 h-4" />
-                <span>{note.stats.reactions}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Repeat2 className="w-4 h-4" />
-                <span>{note.stats.reposts}</span>
-              </div>
-            </div>
+        <div className="flex items-center space-x-6 mt-4 text-gray-500">
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="w-4 h-4" />
+            <span>{note.stats.replies == 10 ? "10+" : note.stats.replies}</span>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center space-x-2 p-0 h-auto"
+            onClick={handleLike}
+          >
+            <Heart
+              className={cn("w-4 h-4", isLiked && "fill-current text-red-500")}
+            />
+            <span>{likeCount == 10 ? "10+" : likeCount}</span>
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Repeat2 className="w-4 h-4" />
+            <span>{note.stats.reposts == 10 ? "10+" : note.stats.reposts}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center space-x-2 p-0 h-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            🐛
+          </Button>
         </div>
       </CardContent>
     </Card>

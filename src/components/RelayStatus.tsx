@@ -15,8 +15,6 @@ export default function RelayStatus() {
     if (!ndk) return;
 
     const updateRelayStatus = () => {
-      console.log("update relay status");
-      console.log(ndk.pool.relays);
       const relayStatuses: RelayInfo[] = [];
       ndk.pool?.relays.forEach((relay: NDKRelay) => {
         relayStatuses.push({

@@ -1,5 +1,6 @@
 import { useParams, Navigate } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
+import NoteDetailPage from "./NoteDetailPage";
 
 export default function NostrRoute() {
   const { identifier } = useParams();
@@ -11,6 +12,10 @@ export default function NostrRoute() {
   // Handle different nostr identifier types
   if (identifier.startsWith("npub")) {
     return <ProfilePage />;
+  }
+
+  if (identifier.startsWith("note") || identifier.startsWith("nevent")) {
+    return <NoteDetailPage />;
   }
 
   // Add support for note1 when needed
