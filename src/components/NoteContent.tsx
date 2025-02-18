@@ -209,18 +209,26 @@ export const NoteContent: React.FC<NoteContentProps> = ({
 
                 if (youtubeId) {
                   return (
-                    <div
+                    <a
                       key={wordIndex}
-                      className="mt-2 mb-2 max-w-full aspect-video"
+                      href={`word`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <iframe
-                        className="w-full h-full rounded-lg"
-                        src={`https://www.youtube.com/embed/${youtubeId}`}
-                        title="YouTube video player"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
+                      {word}
+                    </a>
+                    // <div
+                    //   key={wordIndex}
+                    //   className="mt-2 mb-2 max-w-full aspect-video"
+                    // >
+                    //   <iframe
+                    //     className="w-full h-full rounded-lg"
+                    //     src={`https://www.youtube.com/embed/${youtubeId}`}
+                    //     title="YouTube video player"
+                    //     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    //     allowFullScreen
+                    //   />
+                    // </div>
                   );
                 }
 

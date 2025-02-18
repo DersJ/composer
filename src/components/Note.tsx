@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 import { useNDK } from "hooks/useNDK";
 import { Note as NoteType } from "app/types";
 import NoteHeader from "./NoteHeader";
+import { createLikeEvent, createRepostEvent } from "@/lib/nostr";
+import { NpubMention } from "./NpubMention";
+import { nip19 } from "nostr-tools";
 
 interface NoteProps {
   note: NoteType;
@@ -25,31 +28,41 @@ const Note: React.FC<NoteProps> = ({
 }) => {
   const { ndk } = useNDK();
   const [isLiked, setIsLiked] = React.useState(false);
-  const [likeCount, setLikeCount] = React.useState(note.stats.reactions);
 
-  const handleLike = async () => {
+  const [replyingTo, setReplyingTo] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const fetchReplyingTo = async () => {
+      const tags = note.event.tags.filter((tag) => tag[0] === "p");
+      const tag = tags[tags.length - 1];
+      setReplyingTo(tag?.[1] || "");
+    };
+
+    fetchReplyingTo();
+  }, [note.event.tags]);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!ndk || !ndk.activeUser?.pubkey || isLiked) return;
 
     try {
-      const reaction: NostrEvent = {
-        kind: 7,
-        tags: [
-          ["e", note.id],
-          ["p", note.event.pubkey],
-        ],
-        content: "+",
-        created_at: Math.floor(Date.now() / 1000),
-        pubkey: ndk.activeUser?.pubkey,
-      };
-      const reactionEvent = new NDKEvent(ndk, reaction);
-
-      const event = await reactionEvent.publish();
+      const event = await createLikeEvent(ndk, note.id, note.event.pubkey);
       if (event) {
         setIsLiked(true);
-        setLikeCount((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Failed to like note:", error);
+    }
+  };
+
+  const handleRepost = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!ndk || !ndk.activeUser?.pubkey) return;
+
+    try {
+      await createRepostEvent(ndk, note.id, note.event.pubkey);
+    } catch (error) {
+      console.error("Failed to repost note:", error);
     }
   };
 
@@ -67,6 +80,16 @@ const Note: React.FC<NoteProps> = ({
             ))}
           </div>
         )}
+        {!!replyingTo && (
+          <div className="mt-1 mb-3 flex flex-wrap gap-2">
+            <span className="text-sm text-gray-500">Replying to:</span>
+            <NpubMention
+              key={replyingTo + note.event.id}
+              npub={nip19.npubEncode(replyingTo)}
+            />
+          </div>
+        )}
+
         <NoteHeader
           author={note.author}
           pubkey={note.event.pubkey}
@@ -75,31 +98,39 @@ const Note: React.FC<NoteProps> = ({
 
         <NoteContent content={note.event.content} />
 
-        <div className="flex items-center space-x-6 mt-4 text-gray-500">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="w-4 h-4" />
-            <span>{note.stats.replies == 10 ? "10+" : note.stats.replies}</span>
-          </div>
+        <div className="flex items-center space-x-6 mt-2 text-gray-500">
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center space-x-2 p-0 h-auto"
+            className="flex items-center space-x-2 p-2 h-auto"
+            onClick={onClick}
+          >
+            <MessageSquare className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center space-x-2 p-2 h-auto"
             onClick={handleLike}
           >
             <Heart
               className={cn("w-4 h-4", isLiked && "fill-current text-red-500")}
             />
-            <span>{likeCount == 10 ? "10+" : likeCount}</span>
           </Button>
-          <div className="flex items-center space-x-2">
-            <Repeat2 className="w-4 h-4" />
-            <span>{note.stats.reposts == 10 ? "10+" : note.stats.reposts}</span>
-          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center space-x-2 p-0 h-auto"
+            className="flex items-center space-x-2 p-2 h-auto"
+            onClick={handleRepost}
+          >
+            <Repeat2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center space-x-2 p-2 h-auto"
             onClick={(e) => {
+              console.log(note);
               e.stopPropagation();
             }}
           >

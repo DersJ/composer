@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Note from "@/components/Note";
 import { nip19 } from "nostr-tools";
@@ -9,8 +9,11 @@ import { useThread } from "@/hooks/useThread";
 import { useNote } from "hooks/useNote";
 import { Note as NoteType } from "app/types";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+
 export default function NoteDetailPage() {
   const { identifier } = useParams();
+  const navigate = useNavigate();
   const [parentReplies, setParentReplies] = useState<NoteType[]>([]);
 
   if (!identifier) {
@@ -82,6 +85,16 @@ export default function NoteDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/")}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+
       {threadLoading && (
         <div className="flex items-center justify-center min-h-[200px]">
           <Loader2 className="w-8 h-8 animate-spin" />

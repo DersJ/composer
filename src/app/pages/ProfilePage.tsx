@@ -1,12 +1,13 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNDK } from "@/hooks/useNDK";
 import { NDKUser } from "@nostr-dev-kit/ndk";
 import { useEffect, useState } from "react";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import Note from "@/components/Note";
+import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   const { identifier: npub } = useParams();
@@ -15,6 +16,7 @@ export default function ProfilePage() {
   const [notes, setNotes] = useState<NDKEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadProfile() {
@@ -72,6 +74,15 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto mt-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/")}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-4">
@@ -102,6 +113,12 @@ export default function ProfilePage() {
             key={note.id}
             note={{
               id: note.id,
+              pubkey: note.pubkey,
+              author: {
+                name: user?.profile?.name || "",
+                picture: user?.profile?.image || "",
+                nip05: user?.profile?.nip05 || "",
+              },
               event: note,
               likedBy: [],
               stats: { replies: 0, reactions: 0, reposts: 0 },

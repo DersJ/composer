@@ -1,4 +1,4 @@
-import NDK, { NDKEvent } from "@nostr-dev-kit/ndk";
+import NDK, { NDKEvent, NostrEvent } from "@nostr-dev-kit/ndk";
 import { Note } from "app/types";
 
 export async function fetchFullNote(ndk: NDK, id: string): Promise<Note> {
@@ -157,3 +157,51 @@ export function processLikeEvent(
 
   return { likedEventId };
 }
+
+export const createLikeEvent = async (
+  ndk: NDK,
+  noteId: string,
+  authorPubkey: string
+) => {
+  if (!ndk.activeUser?.pubkey) {
+    throw new Error("No active user");
+  }
+
+  const reaction: NostrEvent = {
+    kind: 7,
+    tags: [
+      ["e", noteId],
+      ["p", authorPubkey],
+    ],
+    content: "+",
+    created_at: Math.floor(Date.now() / 1000),
+    pubkey: ndk.activeUser.pubkey,
+  };
+
+  const reactionEvent = new NDKEvent(ndk, reaction);
+  return await reactionEvent.publish();
+};
+
+export const createRepostEvent = async (
+  ndk: NDK,
+  noteId: string,
+  authorPubkey: string
+) => {
+  if (!ndk.activeUser?.pubkey) {
+    throw new Error("No active user");
+  }
+
+  const repost: NostrEvent = {
+    kind: 6,
+    tags: [
+      ["e", noteId],
+      ["p", authorPubkey],
+    ],
+    content: "",
+    created_at: Math.floor(Date.now() / 1000),
+    pubkey: ndk.activeUser.pubkey,
+  };
+
+  const repostEvent = new NDKEvent(ndk, repost);
+  return await repostEvent.publish();
+};

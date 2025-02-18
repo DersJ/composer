@@ -1,21 +1,21 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import NDK, { NDKEvent, NDKSubscription } from "@nostr-dev-kit/ndk";
+import NDK, { NDKEvent, NDKSubscription, NDKFilter } from "@nostr-dev-kit/ndk";
 import { createFilters, getTimeFromRange, type FeedRule } from "@/lib/rules";
 import { useNDK } from "./useNDK";
 import { processLikeEvent } from "@/lib/nostr";
 import { Note } from "@/app/types";
 
-export function useFeed(rules: FeedRule[]) {
+export function useFeed(rules: FeedRule[], initialNotes: Note[] = []) {
   const { ndk } = useNDK();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [loading, setLoading] = useState(!initialNotes.length);
   const [followedPubkeys, setFollowedPubkeys] = useState<string[]>([]);
   const subscriptions = useRef<NDKSubscription[]>([]);
   const profiles = useRef<Map<string, any>>(new Map());
   const likedEventIds = useRef<Set<string>>(new Set());
   const likesByEventId = useRef<Map<string, Set<string>>>(new Map());
   const currentUntil = useRef<number>(Math.floor(Date.now() / 1000));
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 10;
   const isLoadingMore = useRef(false);
 
   // Fetch followers on mount
@@ -264,14 +264,29 @@ export function useFeed(rules: FeedRule[]) {
   useEffect(() => {
     if (!ndk || !followedPubkeys.length) return;
 
-    // Clear everything only on initial load or when rules/follows change
-    subscriptions.current.forEach((sub) => sub.stop());
-    subscriptions.current = [];
-    setNotes([]);
-    likedEventIds.current.clear();
-    likesByEventId.current.clear();
-    setLoading(true);
-    currentUntil.current = Math.floor(Date.now() / 1000);
+    // Only clear everything if we don't have initial notes
+    if (initialNotes.length === 0) {
+      subscriptions.current.forEach((sub) => sub.stop());
+      subscriptions.current = [];
+      setNotes([]);
+      likedEventIds.current.clear();
+      likesByEventId.current.clear();
+      setLoading(true);
+      currentUntil.current = Math.floor(Date.now() / 1000);
+    }
+
+    // Initialize likedEventIds and likesByEventId from initialNotes
+    initialNotes.forEach((note) => {
+      if (note.likedBy) {
+        note.likedBy.forEach((liker) => {
+          likedEventIds.current.add(note.id);
+          if (!likesByEventId.current.has(note.id)) {
+            likesByEventId.current.set(note.id, new Set());
+          }
+          likesByEventId.current.get(note.id)?.add(liker.pubkey);
+        });
+      }
+    });
 
     loadMore();
     setLoading(false);
@@ -279,7 +294,7 @@ export function useFeed(rules: FeedRule[]) {
     return () => {
       subscriptions.current.forEach((sub) => sub.stop());
     };
-  }, [ndk, rules, followedPubkeys]);
+  }, [ndk, rules, followedPubkeys, initialNotes.length]);
 
   useEffect(() => {
     currentUntil.current = Math.floor(Date.now() / 1000);
