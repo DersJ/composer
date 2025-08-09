@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { requestDeleteEvent } from "@/lib/nostr";
+import { useNDK } from "hooks/useNDK";
 
 interface Feed {
   id: string;
@@ -53,6 +55,14 @@ export default function FeedManager({
   onDeleteFeed,
 }: FeedManagerProps) {
   const navigate = useNavigate();
+  const { ndk } = useNDK();
+
+  const deleteFeed = (feedId: string) => {
+    if (!ndk) return;
+    requestDeleteEvent(ndk, feedId).then(() => {
+      onDeleteFeed(feedId);
+    });
+  };
 
   // Combine default feed with user feeds
   const allFeeds = [...feeds, DEFAULT_FEED];
@@ -104,7 +114,7 @@ export default function FeedManager({
                             "Are you sure you want to delete this feed?"
                           )
                         ) {
-                          onDeleteFeed(feed.id);
+                          deleteFeed(feed.id);
                         }
                       }}
                     >

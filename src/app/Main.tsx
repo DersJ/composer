@@ -11,6 +11,7 @@ import FeedBuilderPage from "./pages/FeedBuilderPage";
 import { useNDK } from "hooks/useNDK";
 import { useFeeds } from "@/contexts/FeedsContext";
 import NostrRoute from "./pages/NostrRoute";
+import About from "./pages/About";
 
 export default function Main() {
   const { ndk, loginWithKey } = useNDK();
@@ -128,11 +129,14 @@ export default function Main() {
           <AlertDescription className="text-red-800">{error}</AlertDescription>
         </Alert>
       )}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/build" element={<FeedBuilderPage />} />
-        <Route path="/:identifier" element={<NostrRoute />} />
-      </Routes>
+      <div className="max-w-5xl mx-auto">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/build" element={<FeedBuilderPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/:identifier" element={<NostrRoute />} />
+        </Routes>
+      </div>
     </div>
   );
 }

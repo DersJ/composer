@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import Note from "@/components/Note";
-import { useFeed } from "@/hooks/useFeed";
 import { Feed } from "@/app/types";
 import { useNavigate } from "react-router-dom";
 import { nip19 } from "nostr-tools";
@@ -16,21 +15,14 @@ const FeedDisplay = ({ feed }: FeedDisplayProps) => {
   const navigate = useNavigate();
   const {
     setCurrentFeed,
-    feedCache,
-    updateFeedCache,
+    notes,
+    loading,
+    loadMore,
     scrollPosition,
     setScrollPosition,
   } = useFeedContext();
 
-  // Get cached state or fetch new
-  const cachedState = feedCache[feed.id];
-  const { notes, loading, loadMore } = useFeed(
-    feed.rules,
-    cachedState?.notes || []
-  );
-
   const loaderRef = useRef<HTMLDivElement>(null);
-
   const debouncedSetScrollPosition = useDebounce(setScrollPosition, 100);
 
   // Track scroll position with debounce
@@ -45,18 +37,6 @@ const FeedDisplay = ({ feed }: FeedDisplayProps) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [debouncedSetScrollPosition]);
 
-  // Update cache when feed state changes
-  useEffect(() => {
-    if (!loading) {
-      updateFeedCache(feed.id, {
-        notes,
-        loading,
-        loadMore,
-        lastUpdated: Date.now(),
-      });
-    }
-  }, [feed.id, notes, loading, loadMore]);
-
   useEffect(() => {
     setCurrentFeed(feed);
   }, [feed, setCurrentFeed]);
@@ -64,7 +44,7 @@ const FeedDisplay = ({ feed }: FeedDisplayProps) => {
   // Restore scroll position when component mounts
   useEffect(() => {
     window.scrollTo(0, scrollPosition);
-  }, [scrollPosition]);
+  }, []);
 
   const handleNoteClick = (noteId: string) => {
     navigate("/" + nip19.noteEncode(noteId));
@@ -92,7 +72,7 @@ const FeedDisplay = ({ feed }: FeedDisplayProps) => {
     return () => {
       observer.disconnect();
     };
-  }, [loading]);
+  }, [loading, loadMore]);
 
   return (
     <div className="space-y-4">

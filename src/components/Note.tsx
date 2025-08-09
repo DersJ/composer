@@ -125,17 +125,19 @@ const Note: React.FC<NoteProps> = ({
           >
             <Repeat2 className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center space-x-2 p-2 h-auto"
-            onClick={(e) => {
-              console.log(note);
-              e.stopPropagation();
-            }}
-          >
-            🐛
-          </Button>
+          {process.env.NODE_ENV === "development" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center space-x-2 p-2 h-auto"
+              onClick={(e) => {
+                console.log(note);
+                e.stopPropagation();
+              }}
+            >
+              🐛
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -42,7 +42,7 @@ const isNoteReference = (word: string): boolean => {
 };
 
 const getNpubFromReference = (reference: string): string => {
-  return reference.replace("nostr:", "").replace(".", "");
+  return reference.replace("nostr:", "").replace(/[.,!?;:]$/, "");
 };
 
 const getNoteIdFromReference = (reference: string): string => {

@@ -1,5 +1,6 @@
 import NDK, { NDKEvent, NostrEvent } from "@nostr-dev-kit/ndk";
 import { Note } from "app/types";
+import { FEED_DEF_KIND } from "./utils";
 
 export async function fetchFullNote(ndk: NDK, id: string): Promise<Note> {
   const event = await ndk.fetchEvent(id);
@@ -204,4 +205,25 @@ export const createRepostEvent = async (
 
   const repostEvent = new NDKEvent(ndk, repost);
   return await repostEvent.publish();
+};
+
+export const requestDeleteEvent = async (ndk: NDK, eventId: string) => {
+  if (!ndk.activeUser?.pubkey) {
+    throw new Error("No active user");
+  }
+
+  const deleteEvent = new NDKEvent(ndk, {
+    kind: 5,
+    tags: [
+      ["e", eventId],
+      ["k", `${FEED_DEF_KIND}`],
+    ],
+    content: "DELETE",
+    pubkey: ndk.activeUser.pubkey,
+    created_at: Math.floor(Date.now() / 1000),
+  });
+
+  console.log("Deleting event", deleteEvent);
+
+  return await deleteEvent.publish();
 };

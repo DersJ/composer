@@ -8,6 +8,10 @@ import {
 import { Feed, FeedRule } from "../app/types";
 import { FEED_DEF_KIND } from "@/lib/utils";
 import { useNDK } from "hooks/useNDK";
+import {
+  NDKSubscriptionCacheUsage,
+  NDKSubscriptionOptions,
+} from "@nostr-dev-kit/ndk";
 
 interface FeedsContextType {
   feeds: Feed[];
@@ -20,12 +24,19 @@ interface FeedsContextType {
 
 const FeedsContext = createContext<FeedsContextType | undefined>(undefined);
 
+const ACTIVE_FEED_KEY = "feedstr-activeFeedId";
+
 export function FeedsProvider({ children }: { children: ReactNode }) {
   const { ndk } = useNDK();
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [activeFeed, setActiveFeed] = useState<Feed | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>(undefined);
+
+  const handleSetActiveFeed = (feed: Feed) => {
+    setActiveFeed(feed);
+    localStorage.setItem(ACTIVE_FEED_KEY, feed.id);
+  };
 
   const loadFeeds = async () => {
     if (!ndk?.activeUser?.pubkey) return;
@@ -36,7 +47,11 @@ export function FeedsProvider({ children }: { children: ReactNode }) {
         authors: [ndk.activeUser.pubkey],
       };
 
-      const events = await ndk.fetchEvents(filter);
+      const opts: NDKSubscriptionOptions = {
+        cacheUsage: NDKSubscriptionCacheUsage.ONLY_RELAY,
+      };
+
+      const events = await ndk.fetchEvents(filter, opts);
       const loadedFeeds: Feed[] = [];
 
       for (const event of events) {
@@ -53,8 +68,11 @@ export function FeedsProvider({ children }: { children: ReactNode }) {
       }
 
       setFeeds(loadedFeeds);
+
+      const storedFeedId = localStorage.getItem(ACTIVE_FEED_KEY);
       if (loadedFeeds.length > 0) {
-        setActiveFeed(loadedFeeds[0]);
+        const storedFeed = loadedFeeds.find((feed) => feed.id === storedFeedId);
+        setActiveFeed(storedFeed || loadedFeeds[0]);
       }
       setLoading(false);
     } catch (e) {
@@ -74,7 +92,7 @@ export function FeedsProvider({ children }: { children: ReactNode }) {
     activeFeed,
     loading,
     error,
-    setActiveFeed,
+    setActiveFeed: handleSetActiveFeed,
     loadFeeds,
   };
 

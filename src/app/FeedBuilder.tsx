@@ -20,16 +20,36 @@ const AlgorithmBuilder = ({
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string>("");
 
-  const subjects = ["Posts", "Pictures"] as const;
+  const subjects = [
+    "Posts",
+    // "Pictures"
+  ] as const;
   const verbs = [
     "posted",
     // "trending",
-    "commented",
+    // "commented",
     "liked",
-    "interacted",
+    // "interacted",
   ] as const;
-  const predicates = ["followers", "nostr", "tribe"] as const;
+  const predicates = [
+    "followers",
+    // "nostr",
+    // "tribe",
+  ] as const;
   const timeRanges = ["1hr", "4hr", "12hr", "24hr", "7d"] as const;
+
+  const getPrepositionFromVerb = (verb: string) => {
+    switch (verb) {
+      case "liked":
+        return "by";
+      case "posted":
+        return "from";
+      case "commented":
+        return "on";
+      case "interacted":
+        return "with";
+    }
+  };
 
   const addRule = () => {
     const newRule: FeedRule = {
@@ -103,6 +123,8 @@ const AlgorithmBuilder = ({
     }
   };
 
+  const selectWidth = "w-1/5";
+
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
@@ -151,8 +173,8 @@ const AlgorithmBuilder = ({
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
+              <div className="flex gap-4 mb-4">
+                <div className={selectWidth}>
                   <label className="block text-sm font-medium mb-1">
                     Subject
                   </label>
@@ -168,10 +190,13 @@ const AlgorithmBuilder = ({
                         {subject}
                       </option>
                     ))}
+                    <option value="Pictures" disabled>
+                      Pictures
+                    </option>
                   </select>
                 </div>
 
-                <div>
+                <div className={selectWidth}>
                   <label className="block text-sm font-medium mb-1">Verb</label>
                   <select
                     value={rule.verb}
@@ -188,7 +213,9 @@ const AlgorithmBuilder = ({
                   </select>
                 </div>
 
-                <div>
+                <div className="mt-8">{getPrepositionFromVerb(rule.verb)}</div>
+
+                <div className={selectWidth}>
                   <label className="block text-sm font-medium mb-1">
                     Predicate
                   </label>
@@ -201,17 +228,27 @@ const AlgorithmBuilder = ({
                   >
                     {predicates.map((predicate) => (
                       <option key={predicate} value={predicate}>
-                        {predicate}
+                        {predicate.charAt(0).toUpperCase() + predicate.slice(1)}
                       </option>
                     ))}
+                    <option value="tribe" disabled>
+                      Tribe (coming soon)
+                    </option>
+                    <option value="nostr" disabled>
+                      Nostr (coming soon)
+                    </option>
+                    <option value="list" disabled>
+                      List (coming soon)
+                    </option>
                   </select>
                 </div>
 
-                <div>
+                {/* <div className={selectWidth}>
                   <label className="block text-sm font-medium mb-1">
-                    Time Range
+                    Time Range (disabled)
                   </label>
                   <select
+                    disabled
                     value={rule.timeRange}
                     onChange={(e) =>
                       updateRule(rule.id, "timeRange", e.target.value)
@@ -224,10 +261,10 @@ const AlgorithmBuilder = ({
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium mb-1">
                   Weight: {rule.weight}%
                 </label>
@@ -240,7 +277,7 @@ const AlgorithmBuilder = ({
                   step={1}
                   className="w-full"
                 />
-              </div>
+              </div> */}
             </div>
           ))}
         </div>

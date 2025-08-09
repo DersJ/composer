@@ -3,33 +3,34 @@ import { useFeeds } from "@/contexts/FeedsContext";
 import FeedDisplay from "../FeedDisplay";
 import FeedManager from "app/FeedManager";
 import RelayStatus from "@/components/RelayStatus";
+import { Button } from "@/components/ui/button";
+import { Info } from "lucide-react";
 
 export default function Home() {
-  const { feeds, activeFeed, setActiveFeed } = useFeeds();
+  const { feeds, activeFeed, setActiveFeed, loadFeeds } = useFeeds();
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Feedstr</h1>
-        {/* <Button onClick={() => navigate("/build")}>
-          <Link to="/build">Create New Feed</Link>
-        </Button> */}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="space-y-4">
+    <div className="h-screen flex flex-col">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-6 min-h-0 sticky">
+        <div className="space-y-4 p-4 col-span-2">
+          <div className="flex justify-between bg-background">
+            <h1 className="text-2xl font-bold">Composer</h1>
+            <Button variant="ghost" onClick={() => navigate("/about")}>
+              <Info className="w-4 h-4" />
+            </Button>
+          </div>
           <FeedManager
             feeds={feeds}
             activeFeed={activeFeed}
             onSelectFeed={setActiveFeed}
             onCreateFeed={() => navigate("/build")}
-            onDeleteFeed={() => {}}
+            onDeleteFeed={loadFeeds}
           />
           <RelayStatus />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="col-span-4 px-4 md:overflow-auto">
           {activeFeed && <FeedDisplay feed={activeFeed} />}
         </div>
       </div>
