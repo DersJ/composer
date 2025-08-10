@@ -58,6 +58,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     window.location.reload();
   };
 
+
   // Don't render anything while checking for NIP-07 to prevent flash
   if (checkingNip07) {
     return <div className="flex items-center justify-center min-h-screen">

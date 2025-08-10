@@ -5,11 +5,13 @@ import { FeedsProvider } from "@/contexts/FeedsContext";
 import { FeedProvider } from "@/context/FeedContext";
 
 function App() {
+  const basename = import.meta.env.PROD ? "/composer" : "";
+  
   return (
     <NDKProvider>
       <FeedsProvider>
         <FeedProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={basename}>
             <Main />
           </BrowserRouter>
         </FeedProvider>
