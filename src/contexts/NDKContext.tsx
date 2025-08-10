@@ -72,11 +72,23 @@ export function NDKProvider({ children }: NDKProviderProps) {
               userNdkInstance.activeUser = user;
             }
 
-            await userNdkInstance.connect();
-            console.log('[NDK] Connected to user relays, setting as active NDK');
-            setNDK(userNdkInstance);
-            console.log("[NDK] Connected using NIP-65 relays:", userRelays);
-            return;
+            try {
+              console.log('[NDK] Connecting to user relays with 10s timeout...');
+              // Add a timeout to prevent hanging
+              await Promise.race([
+                userNdkInstance.connect(),
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Connection timeout')), 10000)
+                )
+              ]);
+              console.log('[NDK] Connected to user relays, setting as active NDK');
+              setNDK(userNdkInstance);
+              console.log("[NDK] Connected using NIP-65 relays:", userRelays);
+              return;
+            } catch (error) {
+              console.warn('[NDK] Failed to connect to user relays, falling back to default:', error);
+              // Fall through to use default relays
+            }
           }
         } else {
           console.log('[NDK] No NIP-65 relay list found');
