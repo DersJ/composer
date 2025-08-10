@@ -4,7 +4,7 @@ export interface FeedRule {
   id: string;
   subject: "Posts" | "Pictures";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
-  predicate: "followers" | "nostr" | "tribe";
+  predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
   weight: number;
 }
@@ -121,7 +121,7 @@ export function createFilters(
     since: rule.timeRange ? getTimeFromRange(rule.timeRange) : undefined,
   };
 
-  if (rule.predicate === "followers") {
+  if (rule.predicate === "follows") {
     return [
       {
         ...baseFilter,

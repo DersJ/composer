@@ -75,8 +75,7 @@ const FeedDisplay = ({ feed }: FeedDisplayProps) => {
   }, [loading, loadMore]);
 
   return (
-    <div className="space-y-4">
-      <h4>{notes.length} notes</h4>
+    <div className="space-y-4 mt-4">
       {notes.map((note) => (
         <Note
           key={note.id}

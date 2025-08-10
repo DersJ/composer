@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { PlusCircle, Save, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FeedRule } from "./types";
 import { useSaveAlgorithm } from "hooks/useSaveAlgorithm";
+import { useFeeds } from "@/contexts/FeedsContext";
+import { useNavigate } from "react-router-dom";
 export interface AlgorithmBuilderProps {
   initialRules?: FeedRule[];
   initialName?: string;
@@ -16,6 +17,8 @@ const AlgorithmBuilder = ({
   initialName = "",
 }: AlgorithmBuilderProps) => {
   const saveAlgorithm = useSaveAlgorithm();
+  const { loadFeeds } = useFeeds();
+  const navigate = useNavigate();
   const [rules, setRules] = useState<FeedRule[]>(initialRules);
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string>("");
@@ -32,7 +35,7 @@ const AlgorithmBuilder = ({
     // "interacted",
   ] as const;
   const predicates = [
-    "followers",
+    "follows",
     // "nostr",
     // "tribe",
   ] as const;
@@ -43,7 +46,7 @@ const AlgorithmBuilder = ({
       case "liked":
         return "by";
       case "posted":
-        return "from";
+        return "by";
       case "commented":
         return "on";
       case "interacted":
@@ -56,7 +59,7 @@ const AlgorithmBuilder = ({
       id: Date.now().toString(),
       subject: "Posts",
       verb: "liked",
-      predicate: "followers",
+      predicate: "follows",
       timeRange: "24hr",
       weight: 0,
     };
@@ -116,10 +119,19 @@ const AlgorithmBuilder = ({
     return true;
   };
 
+  const resetForm = () => {
+    setRules([]);
+    setName("");
+    setError("");
+  };
+
   const handleSave = async () => {
     console.log("saving algorithm", { name, rules });
     if (validateRules()) {
       await saveAlgorithm(rules, name);
+      await loadFeeds(); // Refresh the feeds list
+      resetForm(); // Clear the form
+      navigate("/"); // Navigate back to home
     }
   };
 

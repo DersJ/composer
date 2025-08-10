@@ -25,7 +25,10 @@ export default function Home() {
             activeFeed={activeFeed}
             onSelectFeed={setActiveFeed}
             onCreateFeed={() => navigate("/build")}
-            onDeleteFeed={loadFeeds}
+            onDeleteFeed={(_: string) => {
+              loadFeeds();
+              setActiveFeed(feeds[0]);
+            }}
           />
           <RelayStatus />
         </div>

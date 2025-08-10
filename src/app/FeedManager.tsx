@@ -16,7 +16,7 @@ interface FeedRule {
   id: string;
   subject: "Posts" | "Pictures";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
-  predicate: "followers" | "nostr" | "tribe";
+  predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
   weight: number;
 }
@@ -41,7 +41,7 @@ const DEFAULT_FEED: Feed = {
       id: "default-rule",
       subject: "Posts",
       verb: "posted",
-      predicate: "followers",
+      predicate: "follows",
       timeRange: "24hr",
       weight: 1,
     },
@@ -57,15 +57,15 @@ export default function FeedManager({
   const navigate = useNavigate();
   const { ndk } = useNDK();
 
-  const deleteFeed = (feedId: string) => {
+  const deleteFeed = async (feedId: string) => {
     if (!ndk) return;
-    requestDeleteEvent(ndk, feedId).then(() => {
-      onDeleteFeed(feedId);
-    });
+    await requestDeleteEvent(ndk, feedId);
+    onDeleteFeed(feedId);
   };
 
   // Combine default feed with user feeds
   const allFeeds = [...feeds, DEFAULT_FEED];
+  console.log(allFeeds);
 
   return (
     <div className="space-y-4">

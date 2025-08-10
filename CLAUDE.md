@@ -59,7 +59,7 @@ interface FeedRule {
   id: string;
   subject: "Posts" | "Pictures";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
-  predicate: "followers" | "nostr" | "tribe";
+  predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
   weight: number; // Must sum to 100% across all rules
 }
