@@ -2,7 +2,7 @@ import { NDKEvent } from "@nostr-dev-kit/ndk";
 
 export interface FeedRule {
   id: string;
-  subject: "Posts" | "Pictures";
+  subject: "Posts" | "Pictures" | "Replies";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
   predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";

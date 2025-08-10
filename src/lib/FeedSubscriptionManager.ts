@@ -1,6 +1,6 @@
 import NDK, { NDKEvent, NDKSubscription, NDKFilter } from "@nostr-dev-kit/ndk";
 import { FeedRule, getTimeFromRange } from "@/lib/rules";
-import { createFilters } from "@/lib/rules";
+import { createFilters, isReply, isPost } from "@/lib/rules";
 
 export class FeedSubscriptionManager {
   private subscriptions: NDKSubscription[] = [];
@@ -9,6 +9,21 @@ export class FeedSubscriptionManager {
 
   constructor(ndk: NDK) {
     this.ndk = ndk;
+  }
+
+  // Helper to filter events based on subject
+  private shouldIncludeEvent(event: NDKEvent, subject: FeedRule["subject"]): boolean {
+    switch (subject) {
+      case "Posts":
+        return isPost(event);
+      case "Replies":
+        return isReply(event);
+      case "Pictures":
+        // Pictures filtering is handled by the filter itself with #t tags
+        return true;
+      default:
+        return true;
+    }
   }
 
   subscribe(
@@ -31,12 +46,19 @@ export class FeedSubscriptionManager {
       options;
 
     rules.forEach((rule) => {
+      const wrappedOnEvent = (event: NDKEvent) => {
+        // Apply subject filtering before passing to the handler
+        if (this.shouldIncludeEvent(event, rule.subject)) {
+          onEvent(event);
+        }
+      };
+
       if (rule.verb === "liked") {
         this.subscribeLikedNotes(rule, {
           followedPubkeys,
           currentUntil,
           batchSize,
-          onEvent,
+          onEvent: wrappedOnEvent,
           onComplete,
         });
       } else {
@@ -44,7 +66,7 @@ export class FeedSubscriptionManager {
           followedPubkeys,
           currentUntil,
           batchSize,
-          onEvent,
+          onEvent: wrappedOnEvent,
           onComplete,
         });
       }
@@ -103,7 +125,12 @@ export class FeedSubscriptionManager {
         ids: Array.from(likedEventIds),
       });
 
-      noteSub.on("event", onEvent);
+      noteSub.on("event", (event) => {
+        // Apply subject filtering to liked notes
+        if (this.shouldIncludeEvent(event, rule.subject)) {
+          onEvent(event);
+        }
+      });
       noteSub.on("eose", () => {
         console.debug(
           "[FeedSubscriptionManager] Liked notes subscription EOSE"

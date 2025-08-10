@@ -14,7 +14,7 @@ interface Feed {
 
 interface FeedRule {
   id: string;
-  subject: "Posts" | "Pictures";
+  subject: "Posts" | "Pictures" | "Replies";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
   predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
@@ -30,7 +30,7 @@ interface FeedManagerProps {
 }
 
 function getRuleSummary(rule: FeedRule): string {
-  return `${rule.subject} ${rule.verb} by ${rule.predicate} in last ${rule.timeRange}`;
+  return `${rule.subject} ${rule.verb} by ${rule.predicate}`;
 }
 
 const DEFAULT_FEED: Feed = {

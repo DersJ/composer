@@ -2,7 +2,7 @@ import { NDKFilter } from "@nostr-dev-kit/ndk";
 
 export interface FeedRule {
   id: string;
-  subject: "Posts" | "Pictures";
+  subject: "Posts" | "Pictures" | "Replies";
   verb: "posted" | "trending" | "commented" | "liked" | "interacted";
   predicate: "follows" | "nostr" | "tribe";
   timeRange: "1hr" | "4hr" | "12hr" | "24hr" | "7d";
@@ -60,6 +60,19 @@ const getCommentedFilter = (baseFilter: NDKFilter): NDKFilter[] => {
       ...baseFilter,
       kinds: [1],
       "#e": [], // Events that are replies (have e tags)
+    },
+  ];
+};
+
+// Helper function to handle replies subject - gets all reply events
+const getRepliesFilter = (baseFilter: NDKFilter): NDKFilter[] => {
+  return [
+    {
+      ...baseFilter,
+      kinds: [1],
+      // Note: We can't use "#e": [] to get events WITH e-tags in NDK
+      // Instead, we'll get all events and filter post-processing
+      // The filtering will happen in the feed processing logic
     },
   ];
 };
@@ -141,20 +154,39 @@ export function createFilters(
   if (rule.subject === "Pictures") {
     baseFilter["#t"] = ["image"];
   }
+  
+  // For Replies subject, we'll handle it in the verb switch below
+  // For Posts subject, we'll add post-processing to filter out replies
 
   // Handle verb-specific modifications and return appropriate filters
   switch (rule.verb) {
     case "trending":
+      if (rule.subject === "Replies") {
+        return getRepliesFilter(getTrendingFilter(baseFilter));
+      }
       return [getTrendingFilter(baseFilter)];
     case "posted":
+      if (rule.subject === "Replies") {
+        return getRepliesFilter(baseFilter);
+      }
       return [baseFilter];
     case "commented":
       return getCommentedFilter(baseFilter);
     case "liked":
+      if (rule.subject === "Replies") {
+        // For liked replies, we need to get reactions to reply events
+        return getLikedFilter(baseFilter, followedPubkeys);
+      }
       return getLikedFilter(baseFilter, followedPubkeys);
     case "interacted":
+      if (rule.subject === "Replies") {
+        return getRepliesFilter(getInteractedFilter(baseFilter, followedPubkeys)[0]);
+      }
       return getInteractedFilter(baseFilter, followedPubkeys);
     default:
+      if (rule.subject === "Replies") {
+        return getRepliesFilter(baseFilter);
+      }
       return [baseFilter];
   }
 }
@@ -209,4 +241,27 @@ export const matchesFilter = (
   }
 
   return true;
+};
+
+// Helper functions to determine if an event is a post or reply
+export const isReply = (event: { tags: string[][] }): boolean => {
+  return event.tags.some(tag => tag[0] === 'e');
+};
+
+export const isPost = (event: { tags: string[][] }): boolean => {
+  return !isReply(event);
+};
+
+// Filter events based on subject type (Posts vs Replies)
+export const filterEventsBySubject = (
+  events: { tags: string[][] }[],
+  subject: "Posts" | "Pictures" | "Replies"
+): { tags: string[][] }[] => {
+  if (subject === "Replies") {
+    return events.filter(isReply);
+  } else if (subject === "Posts") {
+    return events.filter(isPost);
+  }
+  // For Pictures, no additional filtering needed beyond what's in the filter
+  return events;
 };

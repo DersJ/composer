@@ -25,6 +25,7 @@ const AlgorithmBuilder = ({
 
   const subjects = [
     "Posts",
+    "Replies",
     // "Pictures"
   ] as const;
   const verbs = [
@@ -58,7 +59,7 @@ const AlgorithmBuilder = ({
     const newRule: FeedRule = {
       id: Date.now().toString(),
       subject: "Posts",
-      verb: "liked",
+      verb: "posted",
       predicate: "follows",
       timeRange: "24hr",
       weight: 0,
