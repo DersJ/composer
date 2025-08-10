@@ -1,6 +1,6 @@
 ## Overview
 
-NostrFeed is a decentralized feed customization application that allows users to define personalized feed algorithms through a simple rule-based interface. Users can specify different content sources and weightings to create their ideal nostr content feed.
+Composer is a decentralized feed customization application that allows users to define personalized feed algorithms through a simple rule-based interface. Users can specify different content sources and weightings to create their ideal nostr content feed.
 
 ## Functional Specification
 

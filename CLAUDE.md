@@ -1,8 +1,8 @@
-# NostrFeed - Context for Claude
+# Composer - Context for Claude
 
 ## Project Overview
 
-NostrFeed is a decentralized feed customization application built on Nostr that allows users to create personalized feed algorithms through a rule-based interface. Users can define weighted rules to customize their content feeds based on various criteria like content type, sources, and engagement patterns.
+Composer is a decentralized feed customization application built on Nostr that allows users to create personalized feed algorithms through a rule-based interface. Users can define weighted rules to customize their content feeds based on various criteria like content type, sources, and engagement patterns.
 
 ## Technology Stack
 

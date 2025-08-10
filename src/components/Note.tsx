@@ -117,7 +117,6 @@ const Note: React.FC<NoteProps> = ({
             onClick={handleReply}
           >
             <MessageSquare className="w-4 h-4" />
-            <span className="text-xs">{note.stats?.replies || 0}</span>
           </Button>
           <Button
             variant="ghost"
@@ -128,7 +127,6 @@ const Note: React.FC<NoteProps> = ({
             <Heart
               className={cn("w-4 h-4", isLiked && "fill-current text-red-500")}
             />
-            <span className="text-xs">{note.stats?.reactions || 0}</span>
           </Button>
           <Button
             variant="ghost"
@@ -137,7 +135,6 @@ const Note: React.FC<NoteProps> = ({
             onClick={handleRepost}
           >
             <Repeat2 className="w-4 h-4" />
-            <span className="text-xs">{note.stats?.reposts || 0}</span>
           </Button>
           {process.env.NODE_ENV === "development" && (
             <Button
