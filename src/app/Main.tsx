@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, EyeIcon } from "lucide-react";
+import { Loader2, EyeIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
 import Home from "./pages/Home";
 import FeedBuilderPage from "./pages/FeedBuilderPage";
 import { useNDK } from "hooks/useNDK";
@@ -9,10 +10,12 @@ import { useFeeds } from "@/contexts/FeedsContext";
 import NostrRoute from "./pages/NostrRoute";
 import About from "./pages/About";
 import LoginScreen from "@/components/LoginScreen";
+import ComposeNote from "@/components/ComposeNote";
 
 export default function Main() {
   const { ndk, loginWithKey } = useNDK();
   const { loading, error } = useFeeds();
+  const [showCompose, setShowCompose] = useState(false);
 
   const isReadOnly = ndk?.activeUser && !ndk.signer;
 
@@ -59,6 +62,30 @@ export default function Main() {
           <Route path="/:identifier" element={<NostrRoute />} />
         </Routes>
       </div>
+
+      {/* Floating Compose Button */}
+      {!isReadOnly && (
+        <Button
+          onClick={() => setShowCompose(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+          size="sm"
+        >
+          <PlusIcon className="h-6 w-6" />
+        </Button>
+      )}
+
+      {/* Compose Modal */}
+      {showCompose && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-2xl">
+            <ComposeNote
+              onClose={() => setShowCompose(false)}
+              autoFocus
+              placeholder="What's on your mind?"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

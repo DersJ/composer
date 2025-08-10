@@ -8,6 +8,7 @@ import { nip19 } from "nostr-tools";
 import { cn } from "@/lib/utils";
 import { useThread } from "@/hooks/useThread";
 import { useNote } from "hooks/useNote";
+import { useReplies } from "@/hooks/useReplies";
 import { Note as NoteType } from "app/types";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,16 @@ export default function NoteDetailPage() {
     loading: threadLoading,
     error: threadError,
   } = useThread(note);
+  const {
+    replies,
+    totalReplyCount,
+    loading: repliesLoading,
+    hasMore,
+    loadMore,
+    error: repliesError,
+  } = useReplies(id as string | null, 8);
 
-  const isThreadContext = parentNotes.size > 0 || parentReplies.length > 0 || (note?.replies && note.replies.length > 0);
+  const isThreadContext = parentNotes.size > 0 || parentReplies.length > 0 || replies.length > 0;
 
   const rootNoteId = note?.event.tags.find((tag) => tag[3] === "root")?.[1];
   const rootNote = rootNoteId ? parentNotes.get(rootNoteId) : null;
@@ -161,20 +170,52 @@ export default function NoteDetailPage() {
         <Note note={note} />
       </div>
 
-      {/* Show replies or skeletons if main note is still loading replies */}
-      {note?.replies && note.replies.length > 0 ? (
+      {/* Show replies section */}
+      {repliesError && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            Error loading replies: {repliesError}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Show replies */}
+      {replies.length > 0 && (
         <div
           className={cn(
             "space-y-4",
             "ml-4 border-l-4 border-gray-200 pl-4" // Always show threaded styling for replies
           )}
         >
-          {note.replies.map((reply) => (
+          {replies.map((reply) => (
             <Note key={reply.id} note={reply} />
           ))}
+          
+          {/* Load more button */}
+          {hasMore && (
+            <div className="text-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadMore}
+                disabled={repliesLoading}
+              >
+                {repliesLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  `Load more replies (${totalReplyCount - replies.length} remaining)`
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-      ) : threadLoading ? (
-        /* Show skeleton placeholders for potential replies while thread loads */
+      )}
+
+      {/* Show loading skeletons for initial load */}
+      {repliesLoading && replies.length === 0 && (
         <div
           className={cn(
             "space-y-4",
@@ -184,7 +225,7 @@ export default function NoteDetailPage() {
           <NoteSkeleton />
           <NoteSkeleton />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

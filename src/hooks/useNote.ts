@@ -9,7 +9,6 @@ interface ProgressiveNoteState {
     initial: boolean;
     author: boolean;
     reactions: boolean;
-    replies: boolean;
     reposts: boolean;
   };
   error: string | null;
@@ -23,7 +22,6 @@ export function useNote(id: string) {
       initial: true,
       author: false,
       reactions: false,
-      replies: false,
       reposts: false,
     },
     error: null,
@@ -72,21 +70,6 @@ export function useNote(id: string) {
         } : null);
         updateLoading('reactions', false);
       },
-      onRepliesLoaded: (replies, replyCount) => {
-        updateNote(prev => prev ? {
-          ...prev,
-          replies,
-          stats: { ...prev.stats, replies: replyCount }
-        } : null);
-        updateLoading('replies', false);
-      },
-      onRepliesUpdated: (replies) => {
-        // Progressive update of replies as author profiles load
-        updateNote(prev => prev ? { 
-          ...prev, 
-          replies
-        } : null);
-      },
       onRepostsLoaded: (repostCount) => {
         updateNote(prev => prev ? {
           ...prev,
@@ -103,7 +86,6 @@ export function useNote(id: string) {
             initial: false,
             author: false,
             reactions: false,
-            replies: false,
             reposts: false,
           },
         }));

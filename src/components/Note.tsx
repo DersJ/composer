@@ -12,6 +12,7 @@ import NoteHeader from "./NoteHeader";
 import { createLikeEvent, createRepostEvent } from "@/lib/nostr";
 import { NpubMention } from "./NpubMention";
 import { nip19 } from "nostr-tools";
+import ComposeNote from "./ComposeNote";
 
 interface NoteProps {
   note: NoteType;
@@ -28,6 +29,7 @@ const Note: React.FC<NoteProps> = ({
 }) => {
   const { ndk } = useNDK();
   const [isLiked, setIsLiked] = React.useState(false);
+  const [showReplyCompose, setShowReplyCompose] = React.useState(false);
 
   const [replyingTo, setReplyingTo] = React.useState<string>("");
 
@@ -40,6 +42,15 @@ const Note: React.FC<NoteProps> = ({
 
     fetchReplyingTo();
   }, [note.event.tags]);
+
+  const handleReply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClick) {
+      onClick(); // Navigate to note detail page
+    } else {
+      setShowReplyCompose(true); // Show reply compose inline
+    }
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -103,9 +114,10 @@ const Note: React.FC<NoteProps> = ({
             variant="ghost"
             size="sm"
             className="flex items-center space-x-2 p-2 h-auto"
-            onClick={onClick}
+            onClick={handleReply}
           >
             <MessageSquare className="w-4 h-4" />
+            <span className="text-xs">{note.stats?.replies || 0}</span>
           </Button>
           <Button
             variant="ghost"
@@ -116,6 +128,7 @@ const Note: React.FC<NoteProps> = ({
             <Heart
               className={cn("w-4 h-4", isLiked && "fill-current text-red-500")}
             />
+            <span className="text-xs">{note.stats?.reactions || 0}</span>
           </Button>
           <Button
             variant="ghost"
@@ -124,6 +137,7 @@ const Note: React.FC<NoteProps> = ({
             onClick={handleRepost}
           >
             <Repeat2 className="w-4 h-4" />
+            <span className="text-xs">{note.stats?.reposts || 0}</span>
           </Button>
           {process.env.NODE_ENV === "development" && (
             <Button
@@ -139,6 +153,20 @@ const Note: React.FC<NoteProps> = ({
             </Button>
           )}
         </div>
+
+        {/* Reply compose section */}
+        {showReplyCompose && (
+          <div className="mt-4 border-t pt-4">
+            <ComposeNote
+              onClose={() => setShowReplyCompose(false)}
+              replyToNoteId={note.id}
+              replyToAuthorPubkey={note.event.pubkey}
+              replyToContent={note.event.content}
+              placeholder="Write your reply..."
+              autoFocus
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

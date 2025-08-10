@@ -6,8 +6,6 @@ interface ProgressiveNoteCallbacks {
   onInitialNote: (note: Note) => void;
   onAuthorLoaded: (author: Note['author']) => void;
   onReactionsLoaded: (reactions: Note['stats']['reactions'], likedBy: Note['likedBy']) => void;
-  onRepliesLoaded: (replies: Note['replies'], replyCount: number) => void;
-  onRepliesUpdated?: (replies: Note['replies']) => void; // For progressive reply updates
   onRepostsLoaded: (reposts: number) => void;
   onError: (error: Error) => void;
 }
@@ -127,71 +125,7 @@ export async function fetchProgressiveNote(ndk: NDK, id: string, callbacks: Prog
       callbacks.onRepostsLoaded(0);
     });
 
-    // Step 5: Fetch replies with progressive loading
-    fetchNoteReplies(ndk, id).then(async (repliesSet) => {
-      try {
-        const replyLimit = Math.min(repliesSet.size, 10);
-        const repliesArray = Array.from(repliesSet).slice(0, replyLimit);
-        
-        // Phase 1: Show replies immediately with basic info
-        const basicReplies: Note[] = repliesArray.map(replyEvent => ({
-          id: replyEvent.id,
-          pubkey: replyEvent.pubkey,
-          event: replyEvent,
-          author: {
-            name: replyEvent.pubkey.slice(0, 8) + "...", // Truncated pubkey
-            picture: "",
-            nip05: "",
-          },
-          stats: {
-            replies: 0,
-            reactions: 0,
-            reposts: 0,
-          },
-          likedBy: [],
-          replies: [],
-        }));
-
-        // Call onRepliesLoaded immediately with basic reply info
-        callbacks.onRepliesLoaded(basicReplies, repliesSet.size);
-
-        // Phase 2: Enhance replies with author profiles progressively
-        if (callbacks.onRepliesUpdated) {
-          const enhancedReplies = [...basicReplies];
-          
-          // Process profiles in parallel with limited concurrency
-          const profilePromises = repliesArray.map(async (replyEvent, index) => {
-            try {
-              const replyAuthor = await withTimeout(
-                fetchProfile(ndk, replyEvent.pubkey),
-                2000, // Reduced timeout for faster fallback
-                "Timeout fetching reply author"
-              );
-
-              if (replyAuthor) {
-                enhancedReplies[index] = {
-                  ...enhancedReplies[index],
-                  author: replyAuthor,
-                };
-                
-                // Update UI incrementally as each profile loads
-                callbacks.onRepliesUpdated?.([...enhancedReplies]);
-              }
-            } catch (error) {
-              // Profile fetch failed, keep basic info - no need to update UI
-            }
-          });
-
-          // Wait for all profile fetches to complete (or timeout)
-          await Promise.allSettled(profilePromises);
-        }
-        
-      } catch (error) {
-        callbacks.onRepliesLoaded([], repliesSet.size);
-      }
-    }).catch(() => {
-      callbacks.onRepliesLoaded([], 0);
-    });
+    // Note: Reply loading is now handled by the useReplies hook
 
 
 
@@ -337,6 +271,36 @@ export async function fetchNoteReposts(ndk: NDK, noteId: string, onRepost?: (rep
     });
   });
 }
+
+export const createNoteEvent = async (
+  ndk: NDK,
+  content: string,
+  replyToNoteId?: string,
+  replyToAuthorPubkey?: string
+) => {
+  if (!ndk.activeUser?.pubkey) {
+    throw new Error("No active user");
+  }
+
+  const tags: string[][] = [];
+  
+  // Add reply tags if this is a reply
+  if (replyToNoteId && replyToAuthorPubkey) {
+    tags.push(["e", replyToNoteId, "", "reply"]);
+    tags.push(["p", replyToAuthorPubkey]);
+  }
+
+  const noteEvent: NostrEvent = {
+    kind: 1,
+    tags,
+    content: content.trim(),
+    created_at: Math.floor(Date.now() / 1000),
+    pubkey: ndk.activeUser.pubkey,
+  };
+
+  const event = new NDKEvent(ndk, noteEvent);
+  return await event.publish();
+};
 
 export const createLikeEvent = async (
   ndk: NDK,
