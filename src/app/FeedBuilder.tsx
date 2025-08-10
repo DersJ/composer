@@ -203,9 +203,9 @@ const AlgorithmBuilder = ({
                         {subject}
                       </option>
                     ))}
-                    <option value="Pictures" disabled>
+                    {/* <option value="Pictures" disabled>
                       Pictures
-                    </option>
+                    </option> */}
                   </select>
                 </div>
 
