@@ -19,17 +19,31 @@ export default function Main() {
 
   const isReadOnly = ndk?.activeUser && !ndk.signer;
 
+  console.log('[Main] NDK state:', {
+    hasNdk: !!ndk,
+    hasActiveUser: !!ndk?.activeUser,
+    activeUserPubkey: ndk?.activeUser?.pubkey,
+    hasSigner: !!ndk?.signer,
+    isReadOnly,
+    feedsLoading: loading,
+    feedsError: error
+  });
+
   if (!ndk || !ndk.activeUser?.pubkey) {
+    console.log('[Main] No NDK or active user, showing LoginScreen');
     return <LoginScreen onLogin={loginWithKey} />;
   }
 
   if (loading) {
+    console.log('[Main] Feeds loading, showing spinner');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
+
+  console.log('[Main] All good, rendering main app');
 
   return (
     <div>

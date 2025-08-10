@@ -19,17 +19,26 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   useEffect(() => {
     // Check for NIP-07 extension
     const checkNip07 = async () => {
+      console.log('[LoginScreen] Checking for NIP-07 extension...');
+      console.log('[LoginScreen] window.nostr exists:', !!window.nostr);
+      
       try {
         if (typeof window !== "undefined" && window.nostr) {
+          console.log('[LoginScreen] NIP-07 extension detected!');
           setHasNip07(true);
+        } else {
+          console.log('[LoginScreen] No NIP-07 extension found');
         }
       } catch (error) {
+        console.log('[LoginScreen] Error checking for NIP-07:', error);
         // NIP-07 not available
       }
+      console.log('[LoginScreen] Finished NIP-07 check, setting checkingNip07 to false');
       setCheckingNip07(false);
     };
 
     // Small delay to prevent flash
+    console.log('[LoginScreen] Setting timer to check NIP-07 in 100ms');
     const timer = setTimeout(checkNip07, 100);
     return () => clearTimeout(timer);
   }, []);
@@ -55,12 +64,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   const handleExtensionLogin = () => {
+    console.log('[LoginScreen] Extension login clicked, reloading page...');
     window.location.reload();
   };
 
 
   // Don't render anything while checking for NIP-07 to prevent flash
   if (checkingNip07) {
+    console.log('[LoginScreen] Still checking for NIP-07, showing spinner...');
     return <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="w-8 h-8 animate-spin" />
     </div>
@@ -68,6 +79,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   // Don't show login screen if NIP-07 is available
   if (hasNip07) {
+    console.log('[LoginScreen] NIP-07 is available, showing spinner (NDK should be initializing)...');
     return <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="w-8 h-8 animate-spin" />
     </div>

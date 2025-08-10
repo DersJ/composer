@@ -32,13 +32,17 @@ export function NDKProvider({ children }: NDKProviderProps) {
   const initializeWithRelays = useCallback(
     async (ndkInstance: NDK, user: NDKUser) => {
       try {
+        console.log('[NDK] initializeWithRelays - connecting to relays...');
         await ndkInstance.connect();
+        console.log('[NDK] initializeWithRelays - connected successfully');
 
         // Look for NIP-65 relay list event
+        console.log('[NDK] Fetching NIP-65 relay list for user:', user.pubkey);
         const relayListEvents = await ndkInstance.fetchEvents({
           kinds: [10002],
           authors: [user.pubkey],
         });
+        console.log('[NDK] Found', relayListEvents.size, 'NIP-65 events');
 
         let userRelays: string[] = [];
 
@@ -48,12 +52,15 @@ export function NDKProvider({ children }: NDKProviderProps) {
         )[0];
 
         if (relayList) {
+          console.log('[NDK] Processing NIP-65 relay list event');
           // Parse the relay list from the event tags
           userRelays = relayList.tags
             .filter((tag) => tag[0] === "r")
             .map((tag) => tag[1]);
+          console.log('[NDK] Extracted user relays from NIP-65:', userRelays);
 
           if (userRelays.length > 0) {
+            console.log('[NDK] Creating new NDK instance with user relays');
             // Create new NDK instance with user's relays
             const userNdkInstance = new NDK({
               signer: ndkInstance.signer,
@@ -66,17 +73,22 @@ export function NDKProvider({ children }: NDKProviderProps) {
             }
 
             await userNdkInstance.connect();
+            console.log('[NDK] Connected to user relays, setting as active NDK');
             setNDK(userNdkInstance);
-            console.log("Connected using NIP-65 relays:", userRelays);
+            console.log("[NDK] Connected using NIP-65 relays:", userRelays);
             return;
           }
+        } else {
+          console.log('[NDK] No NIP-65 relay list found');
         }
 
         // If no NIP-65 relays found, use the provided instance
+        console.log('[NDK] Using default relays, setting NDK instance');
         setNDK(ndkInstance);
-        console.log("Connected using default relays:", RELAYS);
+        console.log("[NDK] Connected using default relays:", RELAYS);
       } catch (error) {
-        console.error("Error initializing NDK:", error);
+        console.error("[NDK] Error initializing NDK:", error);
+        console.log('[NDK] Setting fallback NDK instance');
         setNDK(ndkInstance); // Fallback to default instance
       }
     },
@@ -86,25 +98,38 @@ export function NDKProvider({ children }: NDKProviderProps) {
   // Initialize with NIP-07 signer
   useEffect(() => {
     const initNdk = async () => {
+      console.log('[NDK] Starting NIP-07 initialization...');
+      console.log('[NDK] Checking for window.nostr:', !!window.nostr);
+      
       const signer = new NDKNip07Signer();
+      console.log('[NDK] Created NDKNip07Signer');
 
       const ndkInstance = new NDK({
         signer,
         explicitRelayUrls: RELAYS,
         cacheAdapter: dexieAdapter,
       });
+      console.log('[NDK] Created NDK instance with relays:', RELAYS);
 
       try {
+        console.log('[NDK] Attempting to get user from signer...');
         const user = await signer.user();
+        console.log('[NDK] Signer.user() result:', user?.pubkey ? `User found: ${user.pubkey}` : 'No user found');
+        
         if (!user) {
+          console.log('[NDK] No user from signer, connecting without user...');
           await ndkInstance.connect();
+          console.log('[NDK] Connected without user, setting NDK instance');
           setNDK(ndkInstance);
           return;
         }
 
+        console.log('[NDK] User found, initializing with relays...');
         await initializeWithRelays(ndkInstance, user);
+        console.log('[NDK] Successfully initialized with user and relays');
       } catch (error) {
-        console.error("Error with NIP-07 initialization:", error);
+        console.error('[NDK] Error with NIP-07 initialization:', error);
+        console.log('[NDK] Will still try to set NDK instance as fallback');
       }
     };
 
