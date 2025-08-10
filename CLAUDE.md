@@ -11,7 +11,7 @@ Composer is a decentralized feed customization application built on Nostr that a
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **Nostr Integration**: NDK (Nostr Development Kit) 2.11.0 with Dexie caching
 - **Build Tool**: Vite 5.4.10
-- **Package Manager**: Yarn
+- **Package Manager**: NPM 
 
 ## Key Features
 
@@ -83,9 +83,9 @@ interface Feed {
 
 ## Development Commands
 
-- `yarn dev` - Start development server
-- `yarn build` - Build for production (runs TypeScript check)
-- `yarn lint` - Run ESLint
+- `npm run dev` - Start development server
+- `npm run build` - Build for production (runs TypeScript check)
+- `npm run lint` - Run ESLint
 
 ## Current Implementation Status
 
