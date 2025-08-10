@@ -75,12 +75,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
             try {
               console.log('[NDK] Connecting to user relays with 10s timeout...');
               // Add a timeout to prevent hanging
-              await Promise.race([
-                userNdkInstance.connect(),
-                new Promise((_, reject) => 
-                  setTimeout(() => reject(new Error('Connection timeout')), 10000)
-                )
-              ]);
+              await userNdkInstance.connect(3000);
               console.log('[NDK] Connected to user relays, setting as active NDK');
               setNDK(userNdkInstance);
               console.log("[NDK] Connected using NIP-65 relays:", userRelays);
@@ -112,7 +107,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
     const initNdk = async () => {
       console.log('[NDK] Starting NIP-07 initialization...');
       console.log('[NDK] Checking for window.nostr:', !!window.nostr);
-      
+
       const signer = new NDKNip07Signer();
       console.log('[NDK] Created NDKNip07Signer');
 
@@ -127,7 +122,7 @@ export function NDKProvider({ children }: NDKProviderProps) {
         console.log('[NDK] Attempting to get user from signer...');
         const user = await signer.user();
         console.log('[NDK] Signer.user() result:', user?.pubkey ? `User found: ${user.pubkey}` : 'No user found');
-        
+
         if (!user) {
           console.log('[NDK] No user from signer, connecting without user...');
           await ndkInstance.connect();
