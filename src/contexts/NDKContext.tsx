@@ -7,7 +7,6 @@ import {
 } from "react";
 import NDK, {
   NDKNip07Signer,
-  NDKEvent,
   NDKPrivateKeySigner,
   NDKUser,
 } from "@nostr-dev-kit/ndk";

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Note from "@/components/Note";
+import NoteSkeleton from "@/components/NoteSkeleton";
 import { nip19 } from "nostr-tools";
 import { cn } from "@/lib/utils";
 import { useThread } from "@/hooks/useThread";
@@ -65,18 +66,31 @@ export default function NoteDetailPage() {
     setParentReplies(parentReplies.reverse());
   }, [parentNotes, note]);
 
+  // Show loading spinner only if main note is still loading
   if (noteLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
       </div>
     );
   }
 
-  if (noteError || threadError) {
+  if (noteError) {
     return (
       <Alert className="max-w-2xl mx-auto mt-4">
-        <AlertDescription>{noteError || threadError}</AlertDescription>
+        <AlertDescription>{noteError}</AlertDescription>
       </Alert>
     );
   }
@@ -95,51 +109,79 @@ export default function NoteDetailPage() {
         Back
       </Button>
 
-      {threadLoading && (
-        <div className="flex items-center justify-center min-h-[200px]">
-          <Loader2 className="w-8 h-8 animate-spin" />
-        </div>
+      {/* Show thread error if exists */}
+      {threadError && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            Error loading thread: {threadError}
+          </AlertDescription>
+        </Alert>
       )}
-      {!!rootNote && (
+
+      {/* Show root note or skeleton */}
+      {rootNote ? (
         <div className="">
           <Note note={rootNote} />
         </div>
-      )}
-      {/* Show thread of parent notes */}
-      {parentReplies.map(
-        (parent, index) =>
-          parent && (
-            <div
-              key={parent.id}
-              className={cn("ml-4 border-l-4 border-gray-200 pl-4")}
-            >
-              <Note note={parent} />
-            </div>
-          )
+      ) : threadLoading && parentNotes.size === 0 ? (
+        <NoteSkeleton />
+      ) : null}
+
+      {/* Show parent thread or skeletons */}
+      {threadLoading && parentReplies.length === 0 && parentNotes.size === 0 ? (
+        // Show skeleton placeholders while loading
+        <>
+          <NoteSkeleton className="ml-4 border-l-4 border-gray-200 pl-4" />
+          <NoteSkeleton className="ml-4 border-l-4 border-gray-200 pl-4" />
+        </>
+      ) : (
+        /* Show actual parent notes */
+        parentReplies.map(
+          (parent, index) =>
+            parent && (
+              <div
+                key={parent.id}
+                className={cn("ml-4 border-l-4 border-gray-200 pl-4")}
+              >
+                <Note note={parent} />
+              </div>
+            )
+        )
       )}
 
-      {/* Show current note */}
+      {/* Show current note - this should always be available once noteLoading is false */}
       <div
         className={cn(
-          parentNotes.size > 0 && "ml-4 border-l-4 border-gray-200 pl-4"
+          (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
         )}
       >
         <Note note={note} />
       </div>
 
-      {/* Show replies */}
-      {!!note?.replies && (
+      {/* Show replies or skeletons if main note is still loading replies */}
+      {note?.replies && note.replies.length > 0 ? (
         <div
           className={cn(
             "space-y-4",
-            parentNotes.size > 0 && "ml-4 border-l-4 border-gray-200 pl-4"
+            (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
           )}
         >
           {note.replies.map((reply) => (
             <Note key={reply.id} note={reply} />
           ))}
         </div>
-      )}
+      ) : threadLoading ? (
+        /* Show skeleton placeholders for potential replies while thread loads */
+        <div
+          className={cn(
+            "space-y-4",
+            (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
+          )}
+        >
+          <NoteSkeleton />
+          <NoteSkeleton />
+        </div>
+      ) : null}
     </div>
   );
 }

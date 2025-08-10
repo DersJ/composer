@@ -44,7 +44,12 @@ export function useThread(note: Note | null): ThreadResult {
 
   useEffect(() => {
     async function fetchParentNotes() {
-      if (!ndk || parentNoteIds.length === 0) return;
+      
+      
+      if (!ndk || parentNoteIds.length === 0) {
+        
+        return;
+      }
 
       setLoading(true);
       setError(null);
@@ -54,41 +59,62 @@ export function useThread(note: Note | null): ThreadResult {
         const visited = new Set<string>();
 
         // Fetch each parent note and its parents recursively
-        const fetchNote = async (id: string) => {
-          if (visited.has(id)) return;
+        const fetchNote = async (id: string, depth = 0) => {
+          
+          
+          if (visited.has(id)) {
+            
+            return;
+          }
+          
+          if (depth > 10) {
+            
+            return;
+          }
+          
           visited.add(id);
+          
 
           try {
+            
             const parentNote = await fetchBareNote(ndk, id);
             notes.set(id, parentNote);
+            
 
             // Look for parents of this note, but only if it's not a root note
             const eTags = parentNote.event.tags.filter((t) => t[0] === "e");
-            const notRootNote = eTags.some((t) => t[3] === "root");
+            const hasRootTag = eTags.some((t) => t[3] === "root");
+            
+            
 
             // Only continue fetching parents if this isn't a root note
-            if (notRootNote) {
+            if (!hasRootTag) {
+              
               for (const tag of eTags) {
                 if (!visited.has(tag[1])) {
-                  await fetchNote(tag[1]);
+                  
+                  await fetchNote(tag[1], depth + 1);
                 }
               }
+            } else {
+              
             }
           } catch (err) {
-            console.error(`Error fetching note ${id}:`, err);
+            
           }
         };
 
         // Start fetching from our initial parent IDs
+        
         for (const id of parentNoteIds) {
-          await fetchNote(id);
+          await fetchNote(id, 0);
         }
 
-        // Reverse the array so root notes appear first
-        // setParentNotes(notes.reverse());
+        
         setParentNotes(notes);
         setLoading(false);
       } catch (err) {
+        
         setError(
           err instanceof Error ? err.message : "Failed to fetch parent notes"
         );
