@@ -18,14 +18,19 @@ export default function Home() {
       <div className="md:hidden bg-background border-b p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setIsFeedManagerOpen(!isFeedManagerOpen)}
             >
               {isFeedManagerOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </Button>
-            <h1 className="text-2xl font-bold">Composer</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">Composer</h1>
+              <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                Alpha
+              </span>
+            </div>
           </div>
           <Button variant="ghost" onClick={() => navigate("/about")}>
             <Info className="w-4 h-4" />
@@ -35,18 +40,22 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col md:grid md:grid-cols-6 gap-6 min-h-0">
         {/* Feed Manager - Collapsible on mobile */}
-        <div className={`md:col-span-2 bg-background border-b md:border-b-0 md:border-r transition-all duration-200 ease-in-out ${
-          isFeedManagerOpen ? 'block' : 'hidden md:block'
-        }`}>
+        <div className={`md:col-span-2 bg-background border-b md:border-b-0 md:border-r transition-all duration-200 ease-in-out ${isFeedManagerOpen ? 'block' : 'hidden md:block'
+          }`}>
           <div className="space-y-4 p-4 max-h-[40vh] md:max-h-screen overflow-auto">
             {/* Desktop Header */}
             <div className="hidden md:flex justify-between bg-background">
-              <h1 className="text-2xl font-bold">Composer</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">Composer</h1>
+                <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                  Alpha
+                </span>
+              </div>
               <Button variant="ghost" onClick={() => navigate("/about")}>
                 <Info className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <FeedManager
               feeds={feeds}
               activeFeed={activeFeed}
