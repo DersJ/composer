@@ -5,8 +5,10 @@ import { FEED_DEF_KIND } from "./utils";
 interface ProgressiveNoteCallbacks {
   onInitialNote: (note: Note) => void;
   onAuthorLoaded: (author: Note['author']) => void;
-  onStatsLoaded: (stats: Note['stats'], likedBy: Note['likedBy']) => void;
-  onRepliesLoaded: (replies: Note['replies']) => void;
+  onReactionsLoaded: (reactions: Note['stats']['reactions'], likedBy: Note['likedBy']) => void;
+  onRepliesLoaded: (replies: Note['replies'], replyCount: number) => void;
+  onRepliesUpdated?: (replies: Note['replies']) => void; // For progressive reply updates
+  onRepostsLoaded: (reposts: number) => void;
   onError: (error: Error) => void;
 }
 
@@ -14,28 +16,28 @@ interface ProgressiveNoteCallbacks {
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) => 
+    new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
     )
   ]);
 }
 
 export async function fetchProgressiveNote(ndk: NDK, id: string, callbacks: ProgressiveNoteCallbacks): Promise<void> {
-  
-  
+
+
   try {
     // Step 1: Fetch the main event immediately
     const event = await withTimeout(
-      ndk.fetchEvent(id), 
-      10000, 
+      ndk.fetchEvent(id),
+      10000,
       "Timeout fetching main event"
     );
 
     if (!event) {
       throw new Error("Note not found");
     }
-    
-    
+
+
 
     // Return basic note immediately with minimal author info
     const initialNote: Note = {
@@ -61,8 +63,8 @@ export async function fetchProgressiveNote(ndk: NDK, id: string, callbacks: Prog
     // Step 2: Fetch author profile
     try {
       const author = await withTimeout(
-        fetchProfile(ndk, event.pubkey), 
-        5000, 
+        fetchProfile(ndk, event.pubkey),
+        5000,
         "Timeout fetching author profile"
       );
 
@@ -74,205 +76,70 @@ export async function fetchProgressiveNote(ndk: NDK, id: string, callbacks: Prog
 
       callbacks.onAuthorLoaded(finalAuthor);
     } catch (error) {
-      
+
       // Keep the initial author info, don't callback with error here
     }
 
-    // Step 3: Fetch stats and likedBy
-    try {
-      const stats = await withTimeout(
-        fetchNoteStats(ndk, id), 
-        8000, 
-        "Timeout fetching note stats"
-      );
+    // Step 3: Fetch reactions/likes independently
+    fetchNoteReactions(ndk, id).then(async (reactions) => {
+      try {
+        // Process likedBy (limit to 20 reactions)
+        const reactionsLimit = Math.min(reactions.size, 20);
+        const reactionsArray = Array.from(reactions).slice(0, reactionsLimit);
 
-      const statsOutput = {
-        replies: stats.replies.size || 0,
-        reactions: stats.reactions.size || 0,
-        reposts: stats.reposts.size || 0,
-      };
-
-      // Process likedBy (limit to 20 reactions)
-      const reactionsLimit = Math.min(Array.from(stats.reactions).length, 20);
-      const reactionsArray = Array.from(stats.reactions).slice(0, reactionsLimit);
-      
-      const likedByResults = await Promise.allSettled(
-        reactionsArray.map(async (reaction) => {
-          const profile = await withTimeout(
-            fetchProfile(ndk, reaction.pubkey), 
-            2000, 
-            "Timeout fetching reaction profile"
-          );
-          return {
-            pubkey: reaction.pubkey,
-            profile: profile
-              ? {
+        const likedByResults = await Promise.allSettled(
+          reactionsArray.map(async (reaction) => {
+            const profile = await withTimeout(
+              fetchProfile(ndk, reaction.pubkey),
+              2000,
+              "Timeout fetching reaction profile"
+            );
+            return {
+              pubkey: reaction.pubkey,
+              profile: profile
+                ? {
                   name: profile.name,
                   picture: profile.picture,
                 }
-              : undefined,
-          };
-        })
-      );
-
-      const likedBy = likedByResults
-        .filter(result => result.status === 'fulfilled')
-        .map(result => (result as PromiseFulfilledResult<any>).value);
-
-      callbacks.onStatsLoaded(statsOutput, likedBy);
-
-      // Step 4: Fetch replies (in background)
-      try {
-        const replyNotes: Note[] = [];
-        const replyLimit = Math.min(Array.from(stats.replies).length, 10);
-        const repliesArray = Array.from(stats.replies).slice(0, replyLimit);
-        
-        for (const replyEvent of repliesArray) {
-          try {
-            const replyAuthor = await withTimeout(
-              fetchProfile(ndk, replyEvent.pubkey), 
-              3000, 
-              "Timeout fetching reply author"
-            );
-
-            replyNotes.push({
-              id: replyEvent.id,
-              pubkey: replyEvent.pubkey,
-              event: replyEvent,
-              author: replyAuthor || {
-                name: replyEvent.pubkey,
-                picture: "",
-                nip05: "",
-              },
-              stats: {
-                replies: 0,
-                reactions: 0,
-                reposts: 0,
-              },
-              likedBy: [],
-            });
-          } catch (error) {
-            
-            // Still add the reply with basic info
-            replyNotes.push({
-              id: replyEvent.id,
-              pubkey: replyEvent.pubkey,
-              event: replyEvent,
-              author: {
-                name: replyEvent.pubkey,
-                picture: "",
-                nip05: "",
-              },
-              stats: {
-                replies: 0,
-                reactions: 0,
-                reposts: 0,
-              },
-              likedBy: [],
-            });
-          }
-        }
-
-        callbacks.onRepliesLoaded(replyNotes);
-      } catch (error) {
-        
-        // Don't call error callback, just log the warning
-      }
-
-    } catch (error) {
-      
-      // Don't call error callback, just log the warning
-    }
-
-    
-    
-  } catch (error) {
-    
-    callbacks.onError(error as Error);
-  }
-}
-
-export async function fetchFullNote(ndk: NDK, id: string): Promise<Note> {
-  
-  
-  try {
-    const event = await withTimeout(
-      ndk.fetchEvent(id), 
-      10000, 
-      "Timeout fetching main event"
-    );
-
-    if (!event) {
-      throw new Error("Note not found");
-    }
-    
-
-    // Fetch author and stats in parallel with timeouts
-    const [author, stats] = await Promise.allSettled([
-      withTimeout(fetchProfile(ndk, event.pubkey), 5000, "Timeout fetching author profile"),
-      withTimeout(fetchNoteStats(ndk, id), 8000, "Timeout fetching note stats")
-    ]);
-
-    
-
-    const finalAuthor = author.status === 'fulfilled' && author.value ? author.value : {
-      name: event.pubkey,
-      picture: "",
-      nip05: "",
-    };
-
-    const finalStats = stats.status === 'fulfilled' ? stats.value : {
-      replies: new Set(),
-      reactions: new Set(), 
-      reposts: new Set()
-    };
-
-    let statsOutput = {
-      replies: finalStats.replies.size || 0,
-      reactions: finalStats.reactions.size || 0,
-      reposts: finalStats.reposts.size || 0,
-    };
-
-    
-
-    // Process replies with timeout and limit
-    const replyNotes: Note[] = [];
-    const replyLimit = Math.min(Array.from(finalStats.replies).length, 10); // Limit to 10 replies
-    const repliesArray = Array.from(finalStats.replies).slice(0, replyLimit) as NDKEvent[];
-    
-    for (const replyEvent of repliesArray) {
-      try {
-        const replyAuthor = await withTimeout(
-          fetchProfile(ndk, replyEvent.pubkey), 
-          3000, 
-          "Timeout fetching reply author"
+                : undefined,
+            };
+          })
         );
 
-        replyNotes.push({
-          id: replyEvent.id,
-          pubkey: replyEvent.pubkey,
-          event: replyEvent,
-          author: replyAuthor || {
-            name: replyEvent.pubkey,
-            picture: "",
-            nip05: "",
-          },
-          stats: {
-            replies: 0,
-            reactions: 0,
-            reposts: 0,
-          },
-          likedBy: [],
-        });
+        const likedBy = likedByResults
+          .filter(result => result.status === 'fulfilled')
+          .map(result => (result as PromiseFulfilledResult<any>).value);
+
+        callbacks.onReactionsLoaded(reactions.size, likedBy);
       } catch (error) {
+        // Still call with basic reaction count if profile fetching fails
+        callbacks.onReactionsLoaded(reactions.size, []);
+      }
+    }).catch(() => {
+      // Error loading reactions, call with empty data
+      callbacks.onReactionsLoaded(0, []);
+    });
+
+    // Step 4: Fetch reposts independently
+    fetchNoteReposts(ndk, id).then((reposts) => {
+      callbacks.onRepostsLoaded(reposts.size);
+    }).catch(() => {
+      callbacks.onRepostsLoaded(0);
+    });
+
+    // Step 5: Fetch replies with progressive loading
+    fetchNoteReplies(ndk, id).then(async (repliesSet) => {
+      try {
+        const replyLimit = Math.min(repliesSet.size, 10);
+        const repliesArray = Array.from(repliesSet).slice(0, replyLimit);
         
-        // Still add the reply with basic info
-        replyNotes.push({
+        // Phase 1: Show replies immediately with basic info
+        const basicReplies: Note[] = repliesArray.map(replyEvent => ({
           id: replyEvent.id,
           pubkey: replyEvent.pubkey,
           event: replyEvent,
           author: {
-            name: replyEvent.pubkey,
+            name: replyEvent.pubkey.slice(0, 8) + "...", // Truncated pubkey
             picture: "",
             nip05: "",
           },
@@ -282,51 +149,55 @@ export async function fetchFullNote(ndk: NDK, id: string): Promise<Note> {
             reposts: 0,
           },
           likedBy: [],
-        });
-      }
-    }
+          replies: [],
+        }));
 
-    // Get likers with their profiles (with timeout and limit)
-    const reactionsLimit = Math.min(Array.from(finalStats.reactions).length, 20); // Limit to 20 reactions
-    const reactionsArray = Array.from(finalStats.reactions).slice(0, reactionsLimit);
-    
-    const likedByResults = await Promise.allSettled(
-      reactionsArray.map(async (reaction: any) => {
-        const profile = await withTimeout(
-          fetchProfile(ndk, reaction.pubkey), 
-          2000, 
-          "Timeout fetching reaction profile"
-        );
-        return {
-          pubkey: reaction.pubkey,
-          profile: profile
-            ? {
-                name: profile.name,
-                picture: profile.picture,
+        // Call onRepliesLoaded immediately with basic reply info
+        callbacks.onRepliesLoaded(basicReplies, repliesSet.size);
+
+        // Phase 2: Enhance replies with author profiles progressively
+        if (callbacks.onRepliesUpdated) {
+          const enhancedReplies = [...basicReplies];
+          
+          // Process profiles in parallel with limited concurrency
+          const profilePromises = repliesArray.map(async (replyEvent, index) => {
+            try {
+              const replyAuthor = await withTimeout(
+                fetchProfile(ndk, replyEvent.pubkey),
+                2000, // Reduced timeout for faster fallback
+                "Timeout fetching reply author"
+              );
+
+              if (replyAuthor) {
+                enhancedReplies[index] = {
+                  ...enhancedReplies[index],
+                  author: replyAuthor,
+                };
+                
+                // Update UI incrementally as each profile loads
+                callbacks.onRepliesUpdated?.([...enhancedReplies]);
               }
-            : undefined,
-        };
-      })
-    );
+            } catch (error) {
+              // Profile fetch failed, keep basic info - no need to update UI
+            }
+          });
 
-    const likedBy = likedByResults
-      .filter(result => result.status === 'fulfilled')
-      .map(result => (result as PromiseFulfilledResult<any>).value);
+          // Wait for all profile fetches to complete (or timeout)
+          await Promise.allSettled(profilePromises);
+        }
+        
+      } catch (error) {
+        callbacks.onRepliesLoaded([], repliesSet.size);
+      }
+    }).catch(() => {
+      callbacks.onRepliesLoaded([], 0);
+    });
 
-    
 
-    return {
-      id,
-      event,
-      pubkey: event.pubkey,
-      author: finalAuthor,
-      stats: statsOutput,
-      likedBy,
-      replies: replyNotes,
-    } as Note;
+
   } catch (error) {
-    
-    throw error;
+
+    callbacks.onError(error as Error);
   }
 }
 
@@ -378,39 +249,93 @@ export async function fetchProfile(ndk: NDK, pubkey: string) {
       };
     }
   } catch (error) {
-    
+
   }
   return undefined;
 }
 
-export async function fetchNoteStats(ndk: NDK, noteId: string) {
-  const [replies, reactions, reposts] = await Promise.all([
-    ndk.fetchEvents({ kinds: [1], "#e": [noteId] }),
-    ndk.fetchEvents({ kinds: [7], "#e": [noteId] }),
-    ndk.fetchEvents({ kinds: [6], "#e": [noteId] }),
-  ]);
+// Fetch reactions/likes independently
+export async function fetchNoteReactions(ndk: NDK, noteId: string, onReaction?: (reaction: NDKEvent) => void): Promise<Set<NDKEvent>> {
+  return new Promise((resolve) => {
+    const reactions = new Set<NDKEvent>();
 
-  return { replies, reactions, reposts };
+    const reactionSub = ndk.subscribe({
+      kinds: [7],
+      "#e": [noteId],
+    });
+
+    const timeout = setTimeout(() => {
+      reactionSub.stop();
+      resolve(reactions);
+    }, 5000);
+
+    reactionSub.on("event", (event: NDKEvent) => {
+      reactions.add(event);
+      onReaction?.(event); // Optional callback for progressive loading
+    });
+
+    reactionSub.on("eose", () => {
+      clearTimeout(timeout);
+      reactionSub.stop();
+      resolve(reactions);
+    });
+  });
 }
 
-export function processLikeEvent(
-  event: NDKEvent,
-  profiles: Map<string, any>,
-  likedEventIds: Set<string>,
-  likesByEventId: Map<string, Set<string>>
-) {
-  const eventTag = event.tags.find((t) => t[0] === "e");
-  if (!eventTag || event.content !== "+") return null;
+// Fetch replies independently  
+export async function fetchNoteReplies(ndk: NDK, noteId: string, onReply?: (reply: NDKEvent) => void): Promise<Set<NDKEvent>> {
+  return new Promise((resolve) => {
+    const replies = new Set<NDKEvent>();
 
-  const likedEventId = eventTag[1];
-  likedEventIds.add(likedEventId);
+    const replySub = ndk.subscribe({
+      kinds: [1],
+      "#e": [noteId],
+    });
 
-  if (!likesByEventId.has(likedEventId)) {
-    likesByEventId.set(likedEventId, new Set());
-  }
-  likesByEventId.get(likedEventId)?.add(event.pubkey);
+    const timeout = setTimeout(() => {
+      replySub.stop();
+      resolve(replies);
+    }, 5000);
 
-  return { likedEventId };
+    replySub.on("event", (event: NDKEvent) => {
+      replies.add(event);
+      onReply?.(event); // Optional callback for progressive loading
+    });
+
+    replySub.on("eose", () => {
+      clearTimeout(timeout);
+      replySub.stop();
+      resolve(replies);
+    });
+  });
+}
+
+// Fetch reposts independently
+export async function fetchNoteReposts(ndk: NDK, noteId: string, onRepost?: (repost: NDKEvent) => void): Promise<Set<NDKEvent>> {
+  return new Promise((resolve) => {
+    const reposts = new Set<NDKEvent>();
+
+    const repostSub = ndk.subscribe({
+      kinds: [6],
+      "#e": [noteId],
+    });
+
+    const timeout = setTimeout(() => {
+      repostSub.stop();
+      resolve(reposts);
+    }, 5000);
+
+    repostSub.on("event", (event: NDKEvent) => {
+      reposts.add(event);
+      onRepost?.(event); // Optional callback for progressive loading
+    });
+
+    repostSub.on("eose", () => {
+      clearTimeout(timeout);
+      repostSub.stop();
+      resolve(reposts);
+    });
+  });
 }
 
 export const createLikeEvent = async (
@@ -477,7 +402,7 @@ export const requestDeleteEvent = async (ndk: NDK, eventId: string) => {
     created_at: Math.floor(Date.now() / 1000),
   });
 
-  
+
 
   return await deleteEvent.publish();
 };

@@ -17,6 +17,8 @@ export default function NoteDetailPage() {
   const navigate = useNavigate();
   const [parentReplies, setParentReplies] = useState<NoteType[]>([]);
 
+  // Determine if we should show threaded styling
+
   if (!identifier) {
     return <div>Invalid note identifier</div>;
   }
@@ -32,6 +34,8 @@ export default function NoteDetailPage() {
     loading: threadLoading,
     error: threadError,
   } = useThread(note);
+
+  const isThreadContext = parentNotes.size > 0 || parentReplies.length > 0 || (note?.replies && note.replies.length > 0);
 
   const rootNoteId = note?.event.tags.find((tag) => tag[3] === "root")?.[1];
   const rootNote = rootNoteId ? parentNotes.get(rootNoteId) : null;
@@ -79,7 +83,7 @@ export default function NoteDetailPage() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        
+
         <div className="flex items-center justify-center min-h-[200px]">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
@@ -103,7 +107,6 @@ export default function NoteDetailPage() {
         variant="ghost"
         size="sm"
         onClick={() => navigate("/")}
-        className="mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -163,7 +166,7 @@ export default function NoteDetailPage() {
         <div
           className={cn(
             "space-y-4",
-            (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
+            "ml-4 border-l-4 border-gray-200 pl-4" // Always show threaded styling for replies
           )}
         >
           {note.replies.map((reply) => (
@@ -175,7 +178,7 @@ export default function NoteDetailPage() {
         <div
           className={cn(
             "space-y-4",
-            (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
+            isThreadContext && "ml-4 border-l-4 border-gray-200 pl-4"
           )}
         >
           <NoteSkeleton />
