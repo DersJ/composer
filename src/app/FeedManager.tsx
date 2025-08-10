@@ -65,7 +65,6 @@ export default function FeedManager({
 
   // Combine default feed with user feeds
   const allFeeds = [...feeds, DEFAULT_FEED];
-  console.log(allFeeds);
 
   return (
     <div className="space-y-4">

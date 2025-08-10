@@ -45,9 +45,9 @@ export class FeedStateManager {
       //     `[FeedStateManager] Updated note reactions: ${note.stats.reactions}`
       //   );
     } else {
-      console.debug(
-        `[FeedStateManager] Note ${likedEventId.slice(0, 8)} not found for like`
-      );
+      // console.debug(
+      //   `[FeedStateManager] Note ${likedEventId.slice(0, 8)} not found for like`
+      // );
     }
   }
 

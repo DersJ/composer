@@ -36,11 +36,11 @@ export class FeedSubscriptionManager {
       onComplete: () => void;
     }
   ) {
-    console.debug("[FeedSubscriptionManager] Subscribing with rules:", {
-      ruleCount: rules.length,
-      followedPubkeys: options.followedPubkeys.length,
-      until: new Date(options.currentUntil * 1000),
-    });
+    // console.debug("[FeedSubscriptionManager] Subscribing with rules:", {
+    //   ruleCount: rules.length,
+    //   followedPubkeys: options.followedPubkeys.length,
+    //   until: new Date(options.currentUntil * 1000),
+    // });
 
     const { followedPubkeys, currentUntil, batchSize, onEvent, onComplete } =
       options;
@@ -109,16 +109,16 @@ export class FeedSubscriptionManager {
     });
 
     likeSub.on("eose", () => {
-      console.debug(
-        `[FeedSubscriptionManager] Like subscription EOSE. Found ${likedEventIds.size} liked events`
-      );
+      // console.debug(
+      //   `[FeedSubscriptionManager] Like subscription EOSE. Found ${likedEventIds.size} liked events`
+      // );
 
       if (likedEventIds.size === 0) {
         onComplete();
         return;
       }
 
-      console.debug("[FeedSubscriptionManager] Subscribing to liked notes");
+      // console.debug("[FeedSubscriptionManager] Subscribing to liked notes");
       // Then subscribe to the liked notes
       const noteSub = this.ndk.subscribe({
         kinds: [1],
@@ -150,13 +150,13 @@ export class FeedSubscriptionManager {
       until: options.currentUntil,
     });
 
-    console.debug(
-      "[FeedSubscriptionManager] Setting up direct notes subscription:",
-      {
-        filterCount: filters.length,
-        firstFilter: filters[0],
-      }
-    );
+    // console.debug(
+    //   "[FeedSubscriptionManager] Setting up direct notes subscription:",
+    //   {
+    //     filterCount: filters.length,
+    //     firstFilter: filters[0],
+    //   }
+    // );
 
     filters.forEach((filter) => {
       const sub = this.ndk.subscribe(filter);
@@ -167,9 +167,9 @@ export class FeedSubscriptionManager {
         options.onEvent(event);
       });
       sub.on("eose", () => {
-        console.debug(
-          "[FeedSubscriptionManager] Direct notes subscription EOSE"
-        );
+        // console.debug(
+        //   "[FeedSubscriptionManager] Direct notes subscription EOSE"
+        // );
         options.onComplete();
       });
       this.activeSubscriptions.push(sub);
@@ -177,17 +177,17 @@ export class FeedSubscriptionManager {
   }
 
   cleanup() {
-    console.debug(
-      `[FeedSubscriptionManager] Cleaning up ${this.activeSubscriptions.length} subscriptions`
-    );
+    // console.debug(
+    //   `[FeedSubscriptionManager] Cleaning up ${this.activeSubscriptions.length} subscriptions`
+    // );
     this.activeSubscriptions.forEach((sub) => sub.stop());
     this.activeSubscriptions = [];
   }
 
   unsubscribeAll() {
-    console.debug(
-      "[FeedSubscriptionManager] Unsubscribing from all subscriptions"
-    );
+    // console.debug(
+    //   "[FeedSubscriptionManager] Unsubscribing from all subscriptions"
+    // );
     this.activeSubscriptions.forEach((sub) => sub.stop());
     this.activeSubscriptions = [];
   }
