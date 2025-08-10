@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col">
       <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-6 min-h-0 sticky">
-        <div className="space-y-4 p-4 col-span-2">
+        <div className="space-y-4 p-4 col-span-2 max-h-screen overflow-hidden">
           <div className="flex justify-between bg-background">
             <h1 className="text-2xl font-bold">Composer</h1>
             <Button variant="ghost" onClick={() => navigate("/about")}>

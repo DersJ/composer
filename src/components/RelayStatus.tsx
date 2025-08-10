@@ -46,14 +46,13 @@ export default function RelayStatus() {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold">Connected Relays</h3>
+      <h3 className="text-sm font-semibold">Connected Relays ({relays.filter(r => r.status === "connected").length})</h3>
       <div className="space-y-1">
         {relays.map((relay) => (
           <div key={relay.url} className="flex items-center space-x-2 text-sm">
             <div
-              className={`w-2 h-2 rounded-full ${
-                relay.status === "connected" ? "bg-green-500" : "bg-red-500"
-              }`}
+              className={`w-2 h-2 rounded-full ${relay.status === "connected" ? "bg-green-500" : "bg-red-500"
+                }`}
             />
             <span className="truncate">{relay.url}</span>
           </div>
