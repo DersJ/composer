@@ -176,13 +176,13 @@ const AlgorithmBuilder = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter feed name"
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded bg-background text-foreground"
           />
         </div>
 
         <div className="space-y-4">
           {rules.map((rule, index) => (
-            <div key={rule.id} className="p-4 border rounded-lg bg-gray-50">
+            <div key={rule.id} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold">Rule {index + 1}</h3>
                 <Button
@@ -204,7 +204,7 @@ const AlgorithmBuilder = ({
                     onChange={(e) =>
                       updateRule(rule.id, "subject", e.target.value)
                     }
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded bg-background text-foreground"
                   >
                     {subjects.map((subject) => (
                       <option key={subject} value={subject}>
@@ -224,7 +224,7 @@ const AlgorithmBuilder = ({
                     onChange={(e) =>
                       updateRule(rule.id, "verb", e.target.value)
                     }
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded bg-background text-foreground"
                   >
                     {verbs.map((verb) => (
                       <option key={verb} value={verb}>
@@ -245,7 +245,7 @@ const AlgorithmBuilder = ({
                     onChange={(e) =>
                       updateRule(rule.id, "predicate", e.target.value)
                     }
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded bg-background text-foreground"
                   >
                     {predicates.map((predicate) => (
                       <option key={predicate} value={predicate}>
