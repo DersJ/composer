@@ -28,7 +28,7 @@ export default function Home() {
             </Button>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">Composer</h1>
-              <span className="bg-destructive/10 text-destructive text-xs font-semibold px-2 py-1 rounded-full">
+              <span className="bg-red-100 text-red-800 dark:bg-red-700/40 dark:text-red-300 text-xs font-semibold px-2 py-1 rounded-full">
                 Alpha
               </span>
             </div>
@@ -51,7 +51,7 @@ export default function Home() {
             <div className="hidden md:flex justify-between bg-background p-4 border-b">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">Composer</h1>
-                <span className="bg-destructive/10 text-destructive text-xs font-semibold px-2 py-1 rounded-full">
+                <span className="bg-red-100 text-red-800 dark:bg-red-700/40 dark:text-red-300 text-xs font-semibold px-2 py-1 rounded-full">
                   Alpha
                 </span>
                  <ThemeToggle />

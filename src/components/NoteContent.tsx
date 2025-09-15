@@ -184,7 +184,7 @@ export const NoteContent: React.FC<NoteContentProps> = ({
                 return (
                   <div
                     key={wordIndex}
-                    className="mt-2 mb-2 p-4 border rounded-lg bg-gray-50"
+                    className="mt-2 mb-2 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
                   >
                     <NoteHeader
                       author={author}

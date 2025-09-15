@@ -1,6 +1,6 @@
 import NDK, { NDKEvent, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { FeedRule, getTimeFromRange } from "@/lib/rules";
-import { createFilters } from "@/lib/rules";
+import { createFilters, filterEventsBySubject } from "@/lib/rules";
 
 export class FeedSubscriptionManager {
   private ndk: NDK;
@@ -148,7 +148,12 @@ export class FeedSubscriptionManager {
         // console.debug(
         //   `[FeedSubscriptionManager] Received direct note ${event.id.slice(0, 8)}`
         // );
-        options.onEvent(event);
+        
+        // Filter events based on the rule's subject (Posts vs Replies)
+        const filteredEvents = filterEventsBySubject([event], rule.subject);
+        if (filteredEvents.length > 0) {
+          options.onEvent(event);
+        }
       });
       sub.on("eose", () => {
         // console.debug(

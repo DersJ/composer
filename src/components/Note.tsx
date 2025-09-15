@@ -30,12 +30,25 @@ const Note: React.FC<NoteProps> = ({
   const [showReplyCompose, setShowReplyCompose] = React.useState(false);
 
   const [replyingTo, setReplyingTo] = React.useState<string>("");
+  const [isQuoteNote, setIsQuoteNote] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const fetchReplyingTo = async () => {
-      const tags = note.event.tags.filter((tag) => tag[0] === "p");
-      const tag = tags[tags.length - 1];
-      setReplyingTo(tag?.[1] || "");
+      // Check if this is a quote note (has q tags)
+      const qTags = note.event.tags.filter((tag) => tag[0] === "q");
+      const isQuote = qTags.length > 0;
+      setIsQuoteNote(isQuote);
+
+      // Only show "replying to" for actual replies (e tags), not quotes
+      if (!isQuote) {
+        const eTags = note.event.tags.filter((tag) => tag[0] === "e");
+        if (eTags.length > 0) {
+          // For replies, get the author of the note being replied to
+          const pTags = note.event.tags.filter((tag) => tag[0] === "p");
+          const tag = pTags[pTags.length - 1];
+          setReplyingTo(tag?.[1] || "");
+        }
+      }
     };
 
     fetchReplyingTo();
@@ -90,7 +103,7 @@ const Note: React.FC<NoteProps> = ({
             ))}
           </div>
         )}
-        {!!replyingTo && (
+        {!!replyingTo && !isQuoteNote && (
           <div className="mt-1 mb-3 flex flex-wrap gap-2">
             <span className="text-sm text-gray-500">Replying to:</span>
             <NpubMention
