@@ -7,8 +7,8 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { Note, Feed } from "@/app/types";
-import { NDKFilter, NDKEvent } from "@nostr-dev-kit/ndk";
+import { Note, Feed, Profile } from "@/app/types";
+import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { FeedRule } from "@/lib/rules";
 import { useNDK } from "@/hooks/useNDK";
 import { useActiveUser } from "@/hooks/useActiveUser";
@@ -74,7 +74,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         });
 
         if (event) {
-          const profile = JSON.parse(event.content);
+          const profile = JSON.parse(event.content) as Profile;
           stateManager.current.addProfile(pubkey, profile);
           setNotes(stateManager.current.getSortedNotes());
         }
@@ -92,15 +92,16 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     (event: NDKEvent) => {
       try {
         switch (event.kind) {
-          case 1:
-            const note = stateManager.current.addNote(event);
+          case 1: {
+            stateManager.current.addNote(event);
             setNotes(stateManager.current.getSortedNotes());
             if (!stateManager.current.hasProfile(event.pubkey)) {
               fetchProfile(event.pubkey);
             }
             break;
+          }
 
-          case 7:
+          case 7: {
             const likedEventId = event.tags.find((t) => t[0] === "e")?.[1];
             if (likedEventId) {
               stateManager.current.addLike(event, likedEventId);
@@ -110,14 +111,16 @@ export function FeedProvider({ children }: { children: ReactNode }) {
               }
             }
             break;
+          }
 
-          case 6:
+          case 6: {
             const repostedId = event.tags.find((t) => t[0] === "e")?.[1];
             if (repostedId) {
               stateManager.current.addRepost(repostedId);
               setNotes(stateManager.current.getSortedNotes());
             }
             break;
+          }
         }
       } catch (error) {
         console.error("Error handling event:", error, event);
@@ -173,28 +176,28 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     }
   }, [currentFeed, ndk, followedPubkeys, loadMore]);
 
-  const updateFeedCache = (feedId: string, state: FeedState) => {
-    console.debug("[FeedProvider] Updating feed cache");
-    setFeedCache((prev) => ({
-      ...prev,
-      [feedId]: {
-        ...state,
-        lastUpdated: Date.now(),
-      },
-    }));
-  };
+  // const updateFeedCache = (feedId: string, state: FeedState) => {
+  //   console.debug("[FeedProvider] Updating feed cache");
+  //   setFeedCache((prev) => ({
+  //     ...prev,
+  //     [feedId]: {
+  //       ...state,
+  //       lastUpdated: Date.now(),
+  //     },
+  //   }));
+  // };
 
-  const clearFeedCache = (feedId?: string) => {
-    if (feedId) {
-      setFeedCache((prev) => {
-        const newCache = { ...prev };
-        delete newCache[feedId];
-        return newCache;
-      });
-    } else {
-      setFeedCache({});
-    }
-  };
+  // const clearFeedCache = (feedId?: string) => {
+  //   if (feedId) {
+  //     setFeedCache((prev) => {
+  //       const newCache = { ...prev };
+  //       delete newCache[feedId];
+  //       return newCache;
+  //     });
+  //   } else {
+  //     setFeedCache({});
+  //   }
+  // };
 
   // Clear expired cache entries
   const cleanupCache = () => {

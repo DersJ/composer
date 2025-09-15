@@ -64,7 +64,7 @@ export default function Home() {
                 setIsFeedManagerOpen(false); // Auto-close on mobile after selection
               }}
               onCreateFeed={() => navigate("/build")}
-              onDeleteFeed={(_: string) => {
+              onDeleteFeed={() => {
                 loadFeeds();
                 setActiveFeed(feeds[0]);
               }}

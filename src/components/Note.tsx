@@ -1,7 +1,5 @@
 import React from "react";
-import { NDKEvent, NostrEvent } from "@nostr-dev-kit/ndk";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Heart, Repeat2 } from "lucide-react";
 import { NoteContent } from "./NoteContent";
 import { Button } from "@/components/ui/button";

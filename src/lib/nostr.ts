@@ -1,5 +1,5 @@
 import NDK, { NDKEvent, NostrEvent } from "@nostr-dev-kit/ndk";
-import { Note } from "app/types";
+import { Note, Profile } from "app/types";
 import { FEED_DEF_KIND } from "./utils";
 
 interface ProgressiveNoteCallbacks {
@@ -167,7 +167,7 @@ export async function fetchBareNote(ndk: NDK, id: string): Promise<Note> {
   } as Note;
 }
 
-export async function fetchProfile(ndk: NDK, pubkey: string) {
+export async function fetchProfile(ndk: NDK, pubkey: string): Promise<Profile | undefined> {
   try {
     const event = await ndk.fetchEvent({
       kinds: [0],
@@ -175,15 +175,21 @@ export async function fetchProfile(ndk: NDK, pubkey: string) {
     });
 
     if (event) {
-      const profile = JSON.parse(event.content);
+      const profile = JSON.parse(event.content) as Profile;
       return {
         name: profile.name,
         picture: profile.picture,
+        image: profile.image,
         nip05: profile.nip05,
+        about: profile.about,
+        display_name: profile.display_name,
+        website: profile.website,
+        lud16: profile.lud16,
+        banner: profile.banner,
       };
     }
   } catch (error) {
-
+    // Error fetching profile, return undefined
   }
   return undefined;
 }

@@ -21,6 +21,18 @@ export interface NoteStats {
   reposts: number;
 }
 
+export interface Profile {
+  name?: string;
+  picture?: string;
+  image?: string; // Some sources use 'image' instead of 'picture'
+  nip05?: string;
+  about?: string;
+  display_name?: string;
+  website?: string;
+  lud16?: string; // Lightning address
+  banner?: string;
+}
+
 export interface Author {
   name?: string;
   picture?: string;
@@ -31,18 +43,11 @@ export interface Note {
   id: string;
   event: NDKEvent;
   pubkey: string;
-  author: {
-    name?: string;
-    picture?: string;
-    nip05?: string;
-  };
+  author?: Profile;
   stats: NoteStats;
   likedBy?: Array<{
     pubkey: string;
-    profile?: {
-      name?: string;
-      picture?: string;
-    };
+    profile?: Profile;
   }>;
   replies?: Note[];
 }

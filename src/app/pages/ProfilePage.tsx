@@ -123,6 +123,7 @@ export default function ProfilePage() {
               likedBy: [],
               stats: { replies: 0, reactions: 0, reposts: 0 },
             }}
+            showLikedBy={true}
           />
         ))}
       </div>

@@ -1,14 +1,16 @@
 import { NDKEvent } from "@nostr-dev-kit/ndk";
-import { Note } from "@/app/types";
+import { Note, Profile } from "@/app/types";
 
 export class FeedStateManager {
   private notes: Map<string, Note> = new Map();
-  private profiles: Map<string, any> = new Map();
+  private profiles: Map<string, Profile> = new Map();
   private likedEventIds: Set<string> = new Set();
   private likesByEventId: Map<string, Set<string>> = new Map();
 
   addNote(event: NDKEvent): Note {
     // console.debug(`[FeedStateManager] Adding note ${event.id.slice(0, 8)}...`);
+    const likers = this.getLikers(event.id);
+    
     const note: Note = {
       id: event.id,
       event,
@@ -19,7 +21,7 @@ export class FeedStateManager {
         reactions: this.getLikeCount(event.id),
         reposts: 0,
       },
-      likedBy: this.getLikers(event.id),
+      likedBy: likers,
     };
 
     this.notes.set(event.id, note);
@@ -28,9 +30,6 @@ export class FeedStateManager {
   }
 
   addLike(event: NDKEvent, likedEventId: string) {
-    // console.debug(
-    //   `[FeedStateManager] Adding like from ${event.pubkey.slice(0, 8)} for note ${likedEventId.slice(0, 8)}`
-    // );
     this.likedEventIds.add(likedEventId);
     if (!this.likesByEventId.has(likedEventId)) {
       this.likesByEventId.set(likedEventId, new Set());
@@ -41,17 +40,17 @@ export class FeedStateManager {
     if (note) {
       note.stats.reactions = this.getLikeCount(likedEventId);
       note.likedBy = this.getLikers(likedEventId);
-      //   console.debug(
-      //     `[FeedStateManager] Updated note reactions: ${note.stats.reactions}`
-      //   );
+      // console.debug(
+      //   `[FeedStateManager] Updated existing note reactions: ${note.stats.reactions}, likedBy: ${note.likedBy?.length}`
+      // );
     } else {
       // console.debug(
-      //   `[FeedStateManager] Note ${likedEventId.slice(0, 8)} not found for like`
+      //   `[FeedStateManager] Note ${likedEventId.slice(0, 8)} not found for like - will be applied when note is added`
       // );
     }
   }
 
-  addProfile(pubkey: string, profile: any) {
+  addProfile(pubkey: string, profile: Profile) {
     // console.debug(
     //   `[FeedStateManager] Adding profile for ${pubkey.slice(0, 8)}`
     // );
@@ -74,7 +73,7 @@ export class FeedStateManager {
     }));
   }
 
-  private updateProfileReferences(pubkey: string, profile: any) {
+  private updateProfileReferences(pubkey: string, profile: Profile) {
     // Update notes authored by this user
     for (const note of this.notes.values()) {
       if (note.event.pubkey === pubkey) {
@@ -103,7 +102,7 @@ export class FeedStateManager {
     return this.profiles.has(pubkey);
   }
 
-  getProfile(pubkey: string): any {
+  getProfile(pubkey: string): Profile | undefined {
     return this.profiles.get(pubkey);
   }
 

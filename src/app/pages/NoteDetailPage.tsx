@@ -10,7 +10,7 @@ import { useThread } from "@/hooks/useThread";
 import { useNote } from "hooks/useNote";
 import { useReplies } from "@/hooks/useReplies";
 import { Note as NoteType } from "app/types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function NoteDetailPage() {
@@ -18,13 +18,11 @@ export default function NoteDetailPage() {
   const navigate = useNavigate();
   const [parentReplies, setParentReplies] = useState<NoteType[]>([]);
 
-  // Determine if we should show threaded styling
+ 
 
-  if (!identifier) {
-    return <div>Invalid note identifier</div>;
-  }
-
-  const { data: id } = nip19.decode(identifier);
+  const id = useMemo(() => {
+    return nip19.decode(identifier || "").data as string;
+  }, [identifier])
   const {
     note,
     loading: noteLoading,
@@ -77,7 +75,13 @@ export default function NoteDetailPage() {
     findParentReplies(note);
 
     setParentReplies(parentReplies.reverse());
-  }, [parentNotes, note]);
+  }, [parentNotes, note, rootNoteId]);
+
+   // Determine if we should show threaded styling
+
+  if (!identifier) {
+    return <div>Invalid note identifier</div>;
+  }
 
   // Show loading spinner only if main note is still loading
   if (noteLoading) {
@@ -99,6 +103,7 @@ export default function NoteDetailPage() {
       </div>
     );
   }
+  
 
   if (noteError) {
     return (
@@ -133,7 +138,7 @@ export default function NoteDetailPage() {
       {/* Show root note or skeleton */}
       {rootNote ? (
         <div className="">
-          <Note note={rootNote} />
+          <Note note={rootNote} showLikedBy={true} />
         </div>
       ) : threadLoading && parentNotes.size === 0 ? (
         <NoteSkeleton />
@@ -155,7 +160,7 @@ export default function NoteDetailPage() {
                 key={parent.id}
                 className={cn("ml-4 border-l-4 border-gray-200 pl-4")}
               >
-                <Note note={parent} />
+                <Note note={parent} showLikedBy={true} />
               </div>
             )
         )
@@ -167,7 +172,7 @@ export default function NoteDetailPage() {
           (parentNotes.size > 0 || parentReplies.length > 0) && "ml-4 border-l-4 border-gray-200 pl-4"
         )}
       >
-        <Note note={note} />
+        <Note note={note} showLikedBy={true} />
       </div>
 
       {/* Show replies section */}
@@ -188,7 +193,7 @@ export default function NoteDetailPage() {
           )}
         >
           {replies.map((reply) => (
-            <Note key={reply.id} note={reply} />
+            <Note key={reply.id} note={reply} showLikedBy={true} />
           ))}
           
           {/* Load more button */}
