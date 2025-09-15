@@ -54,7 +54,7 @@ export default function ComposeNote({
   const isOverLimit = characterCount > maxCharacters;
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
+    <div className="border rounded-lg p-4 bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">
@@ -69,7 +69,7 @@ export default function ComposeNote({
 
       {/* Reply context */}
       {isReply && replyToContent && showReplyContext && (
-        <div className="mb-3 p-3 bg-gray-50 rounded border-l-4 border-blue-200">
+        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border-l-4 border-blue-200">
           <div className="flex justify-between items-start">
             <p className="text-sm text-gray-600 line-clamp-3">
               {replyToContent.length > 150 

@@ -32,14 +32,14 @@ export default function About() {
       <h2 className="text-xl font-bold">Tutorial</h2>
 
       <div className="space-y-4">
-        <p className="text-gray-700">
+        <p className="text-gray-700 dark:text-gray-300">
           Create a custom feed to discover content based on your criteria. Follow these steps to build your first personalized feed:
         </p>
 
         <div className="space-y-4">
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 1: Create a New Feed</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Click the "Create Feed" button on the home page to open the Feed Algorithm Builder.
             </p>
           </div>
@@ -56,10 +56,10 @@ export default function About() {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Click "Add Rule" to create filtering criteria. Each rule follows the pattern:
             </p>
-            <div className="mt-2 p-2 bg-gray-50 rounded text-sm font-mono">
+            <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm font-mono">
               [Subject] [Verb] by [Predicate]
             </div>
-            <ul className="mt-2 text-xs text-gray-500 space-y-1">
+            <ul className="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-1">
               <li><strong>Subject:</strong> What type of content (Posts)</li>
               <li><strong>Verb:</strong> What action to look for (posted, liked)</li>
               <li><strong>Predicate:</strong> Who performed the action (follows)</li>
@@ -81,9 +81,9 @@ export default function About() {
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
-          <h4 className="font-semibold text-blue-800 mb-2">Example Feed Rules</h4>
-          <ul className="text-sm text-blue-700 space-y-1">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded">
+          <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Example Feed Rules</h4>
+          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
             <li>• <span className="font-mono">Posts liked by follows</span> - Content your network appreciates</li>
             <li>• <span className="font-mono">Posts posted by follows</span> - Latest updates from people you follow</li>
           </ul>

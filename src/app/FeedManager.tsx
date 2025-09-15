@@ -145,7 +145,7 @@ export default function FeedManager({
             {DEFAULT_FEEDS.map((feed) => (
               <Card
                 key={feed.id}
-                className={`cursor-pointer transition-colors hover:bg-gray-50 
+                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 
                 ${activeFeed?.id === feed.id ? "border-primary" : ""}`}
               >
                 <CardContent className="p-4">
@@ -181,7 +181,7 @@ export default function FeedManager({
             .map((feed) => (
               <Card
                 key={feed.id}
-                className={`cursor-pointer transition-colors hover:bg-gray-50 
+                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 
                 ${activeFeed?.id === feed.id ? "border-primary" : ""}`}
               >
                 <CardContent className="p-4">
