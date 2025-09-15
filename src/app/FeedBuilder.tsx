@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Save, Trash2 } from "lucide-react";
@@ -23,6 +23,14 @@ const AlgorithmBuilder = ({
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string>("");
 
+  // Update rules when initialRules changes
+  useEffect(() => {
+    if (initialRules && initialRules.length > 0) {
+      setRules(initialRules);
+      rebalanceWeights(initialRules);
+    }
+  }, [initialRules]);
+
   const subjects = [
     "Posts",
     "Replies",
@@ -40,7 +48,7 @@ const AlgorithmBuilder = ({
     // "nostr",
     // "tribe",
   ] as const;
-  const timeRanges = ["1hr", "4hr", "12hr", "24hr", "7d"] as const;
+  // const timeRanges = ["1hr", "4hr", "12hr", "24hr", "7d"] as const;
 
   const getPrepositionFromVerb = (verb: string) => {
     switch (verb) {
@@ -74,7 +82,7 @@ const AlgorithmBuilder = ({
     rebalanceWeights(newRules);
   };
 
-  const updateRule = (id: string, field: keyof FeedRule, value: any) => {
+  const updateRule = (id: string, field: keyof FeedRule, value: string | number) => {
     const newRules = rules.map((rule) => {
       if (rule.id === id) {
         return { ...rule, [field]: value };
