@@ -95,7 +95,7 @@ export default function FeedManager({
                     </div>
                     <div className="space-y-1">
                       {feed.rules.map((rule, index) => (
-                        <div key={rule.id} className="text-xs text-gray-600">
+                        <div key={rule.id} className="text-xs text-gray-600 dark:text-gray-400">
                           • {getRuleSummary(rule)}
                         </div>
                       ))}

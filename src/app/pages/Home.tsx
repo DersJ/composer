@@ -6,6 +6,7 @@ import FeedManager from "app/FeedManager";
 import RelayStatus from "@/components/RelayStatus";
 import { Button } from "@/components/ui/button";
 import { Info, Menu, X } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
   const { feeds, activeFeed, setActiveFeed, loadFeeds } = useFeeds();
@@ -27,14 +28,17 @@ export default function Home() {
             </Button>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">Composer</h1>
-              <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+              <span className="bg-destructive/10 text-destructive text-xs font-semibold px-2 py-1 rounded-full">
                 Alpha
               </span>
             </div>
           </div>
-          <Button variant="ghost" onClick={() => navigate("/about")}>
-            <Info className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" onClick={() => navigate("/about")}>
+              <Info className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -47,13 +51,16 @@ export default function Home() {
             <div className="hidden md:flex justify-between bg-background">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">Composer</h1>
-                <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                <span className="bg-destructive/10 text-destructive text-xs font-semibold px-2 py-1 rounded-full">
                   Alpha
                 </span>
               </div>
-              <Button variant="ghost" onClick={() => navigate("/about")}>
-                <Info className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button variant="ghost" onClick={() => navigate("/about")}>
+                  <Info className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             <FeedManager

@@ -48,15 +48,15 @@ export default function Main() {
   return (
     <div>
       {isReadOnly && (
-        <div className="bg-yellow-50 border-b border-yellow-100 px-4 py-2 flex items-center justify-center gap-2">
-          <EyeIcon className="h-4 w-4 text-yellow-600" />
-          <span className="text-sm text-yellow-800">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800/20 px-4 py-2 flex items-center justify-center gap-2">
+          <EyeIcon className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <span className="text-sm text-yellow-800 dark:text-yellow-200">
             You are in read-only mode. Sign in with your private key to enable
             posting.
           </span>
           <Button
             variant="link"
-            className="text-yellow-800 text-sm underline ml-2"
+            className="text-yellow-800 dark:text-yellow-200 text-sm underline ml-2"
             onClick={() => window.location.reload()}
           >
             Switch Account
@@ -64,8 +64,8 @@ export default function Main() {
         </div>
       )}
       {error && (
-        <Alert className="mb-6 bg-red-50 border-red-200">
-          <AlertDescription className="text-red-800">{error}</AlertDescription>
+        <Alert className="mb-6 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/20">
+          <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
         </Alert>
       )}
       <div className="max-w-5xl mx-auto">

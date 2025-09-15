@@ -78,11 +78,12 @@ const Note: React.FC<NoteProps> = ({
   return (
     <Card onClick={onClick} className={cn("w-full", className)}>
       <CardContent className="p-4">
+        <div className="flex gap-4">
         {showLikedBy && !!note.likedBy?.length && (
           <div className="mt-1 mb-3 flex flex-wrap gap-2">
             <span className="text-sm text-gray-500">Liked by:</span>
             {note.likedBy?.map((liker, i) => (
-              <span key={liker.pubkey} className="text-sm text-gray-600">
+              <span key={liker.pubkey} className="text-sm text-gray-600 dark:text-gray-400">
                 {liker.profile?.name || liker.pubkey.slice(0, 8)}
                 {i < (note.likedBy?.length || 0) - 1 && ", "}
               </span>
@@ -98,6 +99,7 @@ const Note: React.FC<NoteProps> = ({
             />
           </div>
         )}
+        </div>
 
         <NoteHeader
           author={note.author}

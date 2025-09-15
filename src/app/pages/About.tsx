@@ -39,21 +39,21 @@ export default function About() {
         <div className="space-y-4">
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 1: Create a New Feed</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
               Click the "Create Feed" button on the home page to open the Feed Algorithm Builder.
             </p>
           </div>
 
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 2: Name Your Feed</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Give your feed a descriptive name like "Friends' Liked Posts" or "Latest Updates".
             </p>
           </div>
 
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 3: Add Rules</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Click "Add Rule" to create filtering criteria. Each rule follows the pattern:
             </p>
             <div className="mt-2 p-2 bg-gray-50 rounded text-sm font-mono">
@@ -68,14 +68,14 @@ export default function About() {
 
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 4: Customize Rules</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Adjust each dropdown to match your interests. Multiple rules are automatically weighted equally.
             </p>
           </div>
 
           <div className="border-l-4 border-blue-500 pl-4">
             <h3 className="font-semibold">Step 5: Save & Enjoy</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Click "Save Algorithm" to create your feed. It will appear in your feed list and start showing personalized content.
             </p>
           </div>
