@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { ExpansionPanel } from "@/components/ui/expansion-panel";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { requestDeleteEvent } from "@/lib/nostr";
 import { useNDK } from "hooks/useNDK";
@@ -103,10 +103,10 @@ export default function FeedManager({
   const navigate = useNavigate();
   const { ndk } = useNDK();
   
-  // Determine if expansion panel should be open by default
+  // Determine if expansion panels should be open by default
   const isDefaultFeedActive = DEFAULT_FEEDS.some(defaultFeed => defaultFeed.id === activeFeed?.id);
+  const isCustomFeedActive = feeds.some(feed => feed.id === activeFeed?.id);
   const hasNoCustomFeeds = feeds.length === 0;
-  const [isDefaultFeedsExpanded, setIsDefaultFeedsExpanded] = useState(isDefaultFeedActive || hasNoCustomFeeds);
 
   const deleteFeed = async (feedId: string) => {
     if (!ndk) return;
@@ -126,62 +126,50 @@ export default function FeedManager({
       </div>
 
       {/* Default Feeds Section */}
-      <div className="space-y-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-between p-2 h-auto"
-          onClick={() => setIsDefaultFeedsExpanded(!isDefaultFeedsExpanded)}
-        >
-          <span className="font-medium text-sm text-gray-600">Default Options</span>
-          {isDefaultFeedsExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </Button>
-        
-        {isDefaultFeedsExpanded && (
-          <div className="space-y-2 pl-2">
-            {DEFAULT_FEEDS.map((feed) => (
-              <Card
-                key={feed.id}
-                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 
-                ${activeFeed?.id === feed.id ? "border-primary" : ""}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1" onClick={() => onSelectFeed(feed)}>
-                      <div className="font-medium">{feed.name}</div>
-                      <div className="text-sm text-gray-500 mb-2">
-                        {feed.rules.length} rule
-                        {feed.rules.length === 1 ? "" : "s"}
-                      </div>
-                      <div className="space-y-1">
-                        {feed.rules.map((rule) => (
-                          <div key={rule.id} className="text-xs text-gray-600 dark:text-gray-400">
-                            • {getRuleSummary(rule)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+      <ExpansionPanel
+        title="Preset feeds"
+        defaultExpanded={isDefaultFeedActive || hasNoCustomFeeds}
+      >
+        {DEFAULT_FEEDS.map((feed) => (
+          <Card
+            key={feed.id}
+            className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800
+            ${activeFeed?.id === feed.id ? "border-primary" : ""}`}
+          >
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1" onClick={() => onSelectFeed(feed)}>
+                  <div className="font-medium">{feed.name}</div>
+                  <div className="text-sm text-gray-500 mb-2">
+                    {feed.rules.length} rule
+                    {feed.rules.length === 1 ? "" : "s"}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                  <div className="space-y-1">
+                    {feed.rules.map((rule) => (
+                      <div key={rule.id} className="text-xs text-gray-600 dark:text-gray-400">
+                        • {getRuleSummary(rule)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </ExpansionPanel>
 
       {/* User Feeds Section */}
       {feeds.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-600">Custom Feeds</h4>
+        <ExpansionPanel
+          title="Custom feeds"
+          defaultExpanded={isCustomFeedActive}
+        >
           {feeds
             .filter((feed) => feed?.rules?.length)
             .map((feed) => (
               <Card
                 key={feed.id}
-                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 
+                className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800
                 ${activeFeed?.id === feed.id ? "border-primary" : ""}`}
               >
                 <CardContent className="p-4">
@@ -235,7 +223,7 @@ export default function FeedManager({
                 </CardContent>
               </Card>
             ))}
-        </div>
+        </ExpansionPanel>
       )}
 
       {feeds.length === 0 && (

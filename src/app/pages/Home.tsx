@@ -5,6 +5,7 @@ import FeedDisplay from "../FeedDisplay";
 import FeedManager from "app/FeedManager";
 import RelayStatus from "@/components/RelayStatus";
 import { Button } from "@/components/ui/button";
+import { ExpansionPanel } from "@/components/ui/expansion-panel";
 import { Info, Menu, X } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -76,7 +77,9 @@ export default function Home() {
                   setActiveFeed(feeds[0]);
                 }}
               />
-              <RelayStatus />
+              <ExpansionPanel title="Relay status" defaultExpanded={false}>
+                <RelayStatus />
+              </ExpansionPanel>
             </div>
           </div>
         </div>
